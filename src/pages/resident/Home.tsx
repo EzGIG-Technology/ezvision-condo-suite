@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { CalendarDays, ChevronRight, CreditCard, Hammer, Package, ScanFace, ShieldAlert, ShieldCheck, UserPlus, Users } from 'lucide-react';
+import { CalendarDays, ChevronRight, CreditCard, Hammer, MessageCircle, Package, ScanFace, ShieldAlert, ShieldCheck, Truck, UserPlus, Users, Wrench } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { FaceCrop } from '@/components/vision';
 import { Card, Chip } from '@/components/ui';
@@ -16,6 +16,7 @@ export default function ResidentHome() {
   const bills = useStore((s) => s.bills);
   const bookings = useStore((s) => s.bookings);
   const faceEnrolled = useStore((s) => s.faceEnrolled);
+  const messages = useStore((s) => s.messages);
   const unit = resident.unit;
 
   const today = new Date().toDateString();
@@ -35,6 +36,9 @@ export default function ResidentHome() {
     { to: '/app/face', label: 'Face access', icon: ScanFace, tone: 'bg-grape-soft text-grape-ink' },
     { to: '/app/renovation', label: 'Renovation', icon: Hammer, tone: 'bg-[#EEF1F7] text-muted-dark' },
     { to: '/app/billing', label: 'Fees', icon: CreditCard, tone: 'bg-brand-soft text-brand-ink', badge: due ? 1 : 0 },
+    { to: '/app/guardhouse', label: 'Guardhouse', icon: MessageCircle, tone: 'bg-teal-soft text-teal-dark', badge: messages.filter((m) => m.unit === unit && m.from === 'guard' && !m.read).length },
+    { to: '/app/report', label: 'Report issue', icon: Wrench, tone: 'bg-warn-soft text-warn-ink' },
+    { to: '/app/move', label: 'Move in/out', icon: Truck, tone: 'bg-[#EEF1F7] text-muted-dark' },
   ];
 
   return (

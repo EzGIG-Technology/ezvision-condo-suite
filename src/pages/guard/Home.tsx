@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { AlertTriangle, ArrowRight, Car, ClipboardPen, Clock, LogIn, LogOut, Package, Phone, Route, ScanLine, UserPlus } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Car, ClipboardPen, Clock, LogIn, LogOut, MessageCircle, Package, Phone, Route, ScanLine, UserPlus } from 'lucide-react';
 import { useCurrentGuard, useStore } from '@/store/useStore';
 import { CamFeed, FaceCrop } from '@/components/vision';
 import { Chip, Modal, Plate, Segmented, Select } from '@/components/ui';
@@ -15,6 +15,7 @@ const TILES = [
   { to: '/guard/walk-in', label: 'Walk-in visitor', sub: 'Scan ID, check face, ask resident', icon: UserPlus, tone: 'bg-brand' },
   { to: '/guard/verify', label: 'Verify a pass', sub: 'QR, PIN or name', icon: ScanLine, tone: 'bg-teal' },
   { to: '/guard/parcels', label: 'Parcel', sub: 'Log or hand over', icon: Package, tone: 'bg-[#B45309]' },
+  { to: '/guard/messages', label: 'Messages', sub: 'From residents', icon: MessageCircle, tone: 'bg-teal-dark' },
   { to: '/guard/patrol', label: 'Patrol', sub: 'Next checkpoint', icon: Route, tone: 'bg-grape-ink' },
   { to: '/guard/report', label: 'Report', sub: 'Incident or handover', icon: ClipboardPen, tone: 'bg-navy-500' },
 ];
@@ -53,7 +54,7 @@ export default function GuardHome() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         {TILES.map((t) => (
           <Link key={t.to} to={t.to} className="flex flex-col gap-3 rounded-2xl border border-night-line bg-night-panel p-4 transition-colors hover:border-navy-500 hover:bg-navy-700">
             <span className={cn('flex h-11 w-11 items-center justify-center rounded-xl text-white', t.tone)}><t.icon className="h-5 w-5" /></span>

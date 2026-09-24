@@ -33,6 +33,7 @@ const GuardVerify = lazy(() => import('@/pages/guard/Verify'));
 const GuardParcels = lazy(() => import('@/pages/guard/Parcels'));
 const GuardPatrol = lazy(() => import('@/pages/guard/Patrol'));
 const GuardReport = lazy(() => import('@/pages/guard/Report'));
+const GuardMessages = lazy(() => import('@/pages/guard/Messages'));
 
 const ResidentLayout = lazy(() => import('@/layouts/ResidentLayout'));
 const ResLogin = lazy(() => import('@/pages/resident/Login'));
@@ -49,6 +50,9 @@ const ResUnit = lazy(() => import('@/pages/resident/Unit'));
 const ResFace = lazy(() => import('@/pages/resident/Face'));
 const ResRenovation = lazy(() => import('@/pages/resident/Renovation'));
 const ResBilling = lazy(() => import('@/pages/resident/Billing'));
+const ResGuardhouse = lazy(() => import('@/pages/resident/Guardhouse'));
+const ResReport = lazy(() => import('@/pages/resident/Report'));
+const ResMove = lazy(() => import('@/pages/resident/Move'));
 
 const VisitorPass = lazy(() => import('@/pages/visitor/VisitorPass'));
 const VisitorSelfie = lazy(() => import('@/pages/visitor/VisitorSelfie'));
@@ -102,6 +106,7 @@ export default function App() {
               <Route path="parcels" element={<GuardParcels />} />
               <Route path="patrol" element={<GuardPatrol />} />
               <Route path="report" element={<GuardReport />} />
+              <Route path="messages" element={<GuardMessages />} />
               <Route path="*" element={<Navigate to="/guard" replace />} />
             </Route>
 
@@ -120,6 +125,9 @@ export default function App() {
               <Route path="face" element={<ResFace />} />
               <Route path="renovation" element={<ResRenovation />} />
               <Route path="billing" element={<ResBilling />} />
+              <Route path="guardhouse" element={<ResGuardhouse />} />
+              <Route path="report" element={<ResReport />} />
+              <Route path="move" element={<ResMove />} />
               <Route path="*" element={<Navigate to="/app" replace />} />
             </Route>
 

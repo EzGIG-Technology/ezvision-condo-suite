@@ -1,12 +1,28 @@
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
+import { persist, createJSONStorage, type StateStorage } from 'zustand/middleware';
 import { makeSeed, type Seed } from '@/data/seed';
 import type {
-  Alert, AlertStatus, Announcement, Approval, AuditEntry, Booking, Facility, Parcel, Permit, ResidentNotice, Rule, Session, Ticket, UnitRecord, Visit, WatchEntry,
+  Alert, AlertStatus, Announcement, Approval, AuditEntry, Booking, Facility, LiftBooking, Parcel, Permit, ResidentNotice, Rule, Session, Ticket, UnitRecord, Visit, WatchEntry,
 } from '@/data/types';
 import { code4, hhmm, uid } from '@/lib/utils';
 
 const STORAGE_KEY = 'ezvision-condo-suite:v1';
+
+/**
+ * localStorage, but writes made in the same tick are combined into one. An action that calls set() twice
+ * (for example, save a message, then add a notice) must not expose the half-done state: other tabs reload
+ * on every write, and one that saves in reaction would overwrite the second half.
+ */
+const pending = new Map<string, string>();
+const batchedStorage: StateStorage = {
+  getItem: (name) => pending.get(name) ?? localStorage.getItem(name),
+  setItem: (name, value) => {
+    const first = !pending.has(name);
+    pending.set(name, value);
+    if (first) queueMicrotask(() => { const v = pending.get(name); pending.delete(name); if (v !== undefined) localStorage.setItem(name, v); });
+  },
+  removeItem: (name) => { pending.delete(name); localStorage.removeItem(name); },
+};
 
 type State = Seed & {
   session: Session;
@@ -59,10 +75,18 @@ type State = Seed & {
   // bookings
   createBooking: (b: Omit<Booking, 'id' | 'status'>) => string;
   cancelBooking: (id: string) => void;
+  // service lift and moves
+  createLiftBooking: (b: Omit<LiftBooking, 'id'>) => string;
+  setLiftStatus: (id: string, status: NonNullable<LiftBooking['status']>) => void;
+  setLiftChecklist: (id: string, key: 'pre' | 'post', v: boolean) => void;
+  payLiftDeposit: (id: string) => void;
+  // guardhouse messages
+  sendMessage: (unit: string, from: 'resident' | 'guard', text: string) => void;
+  markMessagesRead: (unit: string, reader: 'resident' | 'guard') => void;
   // community
   sendAnnouncement: (a: Omit<Announcement, 'id' | 'sentAt'>) => void;
   setTicketState: (id: string, state: Ticket['state']) => void;
-  createTicket: (t: Omit<Ticket, 'id'>) => void;
+  createTicket: (t: Omit<Ticket, 'id'>) => string;
   // rules
   toggleRule: (id: string) => void;
   updateRule: (id: string, patch: Partial<Rule>) => void;
@@ -264,13 +288,68 @@ export const useStore = create<State>()(
       },
       cancelBooking: (id) => set({ bookings: get().bookings.map((b) => (b.id === id ? { ...b, status: 'cancelled' } : b)) }),
 
+      createLiftBooking: (b) => {
+        const id = uid('lb');
+        set({ liftBookings: [...get().liftBookings, { ...b, id }] });
+        return id;
+      },
+      setLiftStatus: (id, status) => {
+        const b = get().liftBookings.find((x) => x.id === id);
+        if (!b) return;
+        let visitId = b.visitId;
+        // An approved move puts the mover's lorry on the guard's expected list for that slot.
+        if (status === 'approved' && !visitId && b.lorryPlate) {
+          const [from, to] = b.slot.split(' to ').map((t) => Number(t.slice(0, 2)));
+          const start = new Date(b.date); start.setHours(from - 1, 0, 0, 0);
+          const end = new Date(b.date); end.setHours(to + 1, 0, 0, 0);
+          const host = get().units.find((u) => u.unit === b.unit)?.name ?? b.unit;
+          visitId = get().createVisit({
+            name: b.mover ?? 'Movers', phone: '—', type: 'contractor', unit: b.unit, host, plate: b.lorryPlate, status: 'expected',
+            validFrom: start.toISOString(), validTo: end.toISOString(), selfie: false, faceVariant: 5, people: b.crew ?? 1,
+            note: `${b.what} · ${b.lift} · ${b.slot}`, createdBy: 'management',
+          });
+        }
+        if (status === 'rejected' && visitId) get().cancelVisit(visitId);
+        const depositRefunded = status === 'completed' && b.depositPaid ? true : b.depositRefunded;
+        set({ liftBookings: get().liftBookings.map((x) => (x.id === id ? { ...x, status, visitId, depositRefunded } : x)) });
+        const day = new Date(b.date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+        const body = status === 'approved' ? `${b.what} on ${day}, ${b.slot}. The ${b.lift.toLowerCase()} is reserved and the guard expects ${b.lorryPlate ?? 'your mover'}.`
+          : status === 'rejected' ? `${b.what} on ${day} was not approved. Please pick another slot.`
+          : status === 'completed' ? `${b.what} is closed.${b.depositPaid && b.deposit ? ` Your deposit of RM ${b.deposit} will be refunded.` : ''}` : '';
+        if (body) get().addNotice({ unit: b.unit, title: status === 'approved' ? 'Move approved' : status === 'rejected' ? 'Move not approved' : 'Move completed', body, kind: 'permit', link: '/app/move' });
+      },
+      setLiftChecklist: (id, key, v) => set({ liftBookings: get().liftBookings.map((x) => (x.id === id ? { ...x, checklist: { pre: false, post: false, ...x.checklist, [key]: v } } : x)) }),
+      payLiftDeposit: (id) => {
+        const b = get().liftBookings.find((x) => x.id === id);
+        if (!b) return;
+        set({ liftBookings: get().liftBookings.map((x) => (x.id === id ? { ...x, depositPaid: true } : x)) });
+        if (b.deposit) set({ bills: [{ id: uid('b'), unit: b.unit, label: `${b.what} damage deposit (refundable)`, amount: b.deposit, status: 'paid', paidAt: `Today ${hhmm(now())}`, method: 'FPX', lines: [] }, ...get().bills] });
+      },
+
+      sendMessage: (unit, from, text) => {
+        set({ messages: [...get().messages, { id: uid('gm'), unit, from, text, at: now(), read: false }] });
+        if (from === 'guard') get().addNotice({ unit, title: 'Guardhouse replied', body: text, kind: 'message', link: '/app/guardhouse' });
+      },
+      markMessagesRead: (unit, reader) =>
+        set({ messages: get().messages.map((m) => (m.unit === unit && m.from !== reader && !m.read ? { ...m, read: true } : m)) }),
+
       sendAnnouncement: (a) => {
         set({ announcements: [{ ...a, id: uid('an'), sentAt: now() }, ...get().announcements] });
         if (/all|tower a/i.test(a.audience)) get().addNotice({ unit: get().resident.unit, title: a.title, body: a.body, kind: 'announcement' });
         get().log({ who: a.sentBy, role: 'Building Manager', action: 'Sent', record: `Announcement "${a.title}"` });
       },
-      setTicketState: (id, state) => set({ tickets: get().tickets.map((t) => (t.id === id ? { ...t, state } : t)) }),
-      createTicket: (t) => set({ tickets: [{ ...t, id: `TK-${1183 + get().tickets.length}` }, ...get().tickets] }),
+      setTicketState: (id, state) => {
+        const t = get().tickets.find((x) => x.id === id);
+        set({ tickets: get().tickets.map((x) => (x.id === id ? { ...x, state } : x)) });
+        if (t?.unit && t.raisedBy === 'resident' && t.state !== state) {
+          get().addNotice({ unit: t.unit, title: `${t.id} is ${state.toLowerCase()}`, body: t.title, kind: 'ticket', link: '/app/report' });
+        }
+      },
+      createTicket: (t) => {
+        const id = `TK-${1183 + get().tickets.length}`;
+        set({ tickets: [{ ...t, id, createdAt: t.createdAt ?? now() }, ...get().tickets] });
+        return id;
+      },
 
       toggleRule: (id) => set({ rules: get().rules.map((r) => (r.id === id ? { ...r, enabled: !r.enabled } : r)) }),
       updateRule: (id, patch) => set({ rules: get().rules.map((r) => (r.id === id ? { ...r, ...patch } : r)) }),
@@ -312,7 +391,7 @@ export const useStore = create<State>()(
     {
       name: STORAGE_KEY,
       version: 1,
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => batchedStorage),
     },
   ),
 );

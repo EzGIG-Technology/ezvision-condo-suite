@@ -10,6 +10,7 @@ import { toast } from '@/store/toast';
 const TITLES: Record<string, string> = {
   invite: 'Invite a visitor', pass: 'Visitor pass', visitors: 'Visitors', parcels: 'Parcels', book: 'Book a facility', activity: 'Activity',
   unit: 'My unit', face: 'Face access', renovation: 'Renovation permit', billing: 'Fees and billing',
+  guardhouse: 'Guardhouse', report: 'Report an issue', move: 'Move in or out',
 };
 
 export default function ResidentLayout() {

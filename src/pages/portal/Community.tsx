@@ -158,10 +158,11 @@ function Tickets() {
   const [title, setTitle] = useState('');
   const [unit, setUnit] = useState('');
   const [evidence, setEvidence] = useState(false);
+  const [photo, setPhoto] = useState<Ticket | null>(null);
   const list = tickets.filter((t) => (filter === 'all' ? true : filter === 'open' ? t.state !== 'Resolved' : t.state === 'Resolved'));
   const add = () => {
     if (!title.trim()) return toast.error('Describe the issue');
-    createTicket({ title, meta: `Raised by management · ${unit ? unit.toUpperCase() : 'common area'}`, evidence, state: 'New', unit: unit || undefined });
+    createTicket({ title, meta: `Raised by management · ${unit ? unit.toUpperCase() : 'common area'}`, evidence, state: 'New', unit: unit ? unit.toUpperCase() : undefined, raisedBy: 'management' });
     toast.success('Ticket created'); setOpen(false); setTitle(''); setUnit('');
   };
   return (
@@ -173,9 +174,16 @@ function Tickets() {
       <ul className="divide-y divide-line-soft">
         {list.map((t) => (
           <li key={t.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-ice text-muted"><Wrench className="h-4 w-4" /></span>
-            <div className="min-w-0 flex-1"><p className="font-semibold">{t.title} <span className="font-mono text-xs text-muted">{t.id}</span></p><p className="text-xs text-muted">{t.meta}</p></div>
-            {t.evidence && <Chip tone="blue"><Camera className="h-3 w-3" />Clip attached</Chip>}
+            {t.photo
+              ? <button type="button" onClick={() => setPhoto(t)} aria-label={`View photo for ${t.id}`} className="h-9 w-9 shrink-0 overflow-hidden rounded-xl"><img src={t.photo} alt="" className="h-full w-full object-cover" /></button>
+              : <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-ice text-muted"><Wrench className="h-4 w-4" /></span>}
+            <div className="min-w-0 flex-1">
+              <p className="font-semibold">{t.title} <span className="font-mono text-xs text-muted">{t.id}</span></p>
+              <p className="text-xs text-muted">{t.category ? `${t.category} · ` : ''}{t.meta}</p>
+              {t.details && <p className="mt-0.5 text-xs text-muted-dark">{t.details}</p>}
+            </div>
+            {t.raisedBy === 'resident' && <Chip tone="purple">From resident app</Chip>}
+            {t.evidence && !t.photo && <Chip tone="blue"><Camera className="h-3 w-3" />Clip attached</Chip>}
             <Chip tone={stateTone[t.state]}>{t.state}</Chip>
             <Select aria-label={`Change state of ${t.id}`} value={t.state} onChange={(e) => { setTicketState(t.id, e.target.value as Ticket['state']); toast.info(`${t.id} → ${e.target.value}`); }} className="h-8 w-36 text-xs">
               {STATES.map((s) => <option key={s}>{s}</option>)}
@@ -191,6 +199,9 @@ function Tickets() {
           <Field label="Unit (optional)">{(id) => <Input id={id} value={unit} onChange={(e) => setUnit(e.target.value)} placeholder="B-09-02" className="font-mono uppercase" />}</Field>
           <Checkbox checked={evidence} onChange={setEvidence} label="Attach the last camera clip from this area" />
         </div>
+      </Modal>
+      <Modal open={!!photo} onClose={() => setPhoto(null)} title={photo ? `${photo.id} · ${photo.title}` : ''} description={photo?.location}>
+        {photo?.photo && <img src={photo.photo} alt={`Photo sent with ${photo.id}`} className="w-full rounded-xl" />}
       </Modal>
     </Card>
   );

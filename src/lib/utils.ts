@@ -132,3 +132,21 @@ export const passCode = (id: string) => {
   for (const ch of id) h = (h * 31 + ch.charCodeAt(0)) % 900000;
   return String(100000 + h);
 };
+
+/** Shrinks a photo to a small JPEG data URL so it fits in the demo's local storage. */
+export const shrinkImage = (file: File, max = 480, quality = 0.6) =>
+  new Promise<string>((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, max / Math.max(img.width, img.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      canvas.getContext('2d')?.drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Not an image')); };
+    img.src = url;
+  });

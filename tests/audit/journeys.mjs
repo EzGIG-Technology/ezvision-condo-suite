@@ -29,7 +29,7 @@ const res = await ctx.newPage();
 const visitor = await ctx.newPage();
 for (const [n, p] of [['portal', portal], ['guard', guard], ['resident', res], ['visitor', visitor]]) {
   p.on('pageerror', (e) => errors.push(`${n}: ${e.message}`));
-  p.on('console', (m) => { if (m.type() === 'error' && !/ERR_TUNNEL|fonts\.g/.test(m.text())) errors.push(`${n}: ${m.text()}`); });
+  p.on('console', (m) => { if (m.type() === 'error' && !/ERR_TUNNEL|ERR_CERT_AUTHORITY_INVALID|fonts\.g/.test(m.text())) errors.push(`${n}: ${m.text()}`); });
 }
 expect.configure?.({ timeout: 6000 });
 const T = { timeout: 7000 };
@@ -275,6 +275,73 @@ await step('Incident: manager acknowledges, dispatches and closes an alert with 
   if (await ack.isVisible()) await ack.click();
   const [dl] = await Promise.all([portal.waitForEvent('download', T), portal.getByRole('button', { name: /Evidence pack/i }).first().click()]);
   if (!dl) throw new Error('no download');
+});
+
+await step('Guardhouse messages: resident messages the guardhouse; guard replies on the tablet; resident sees the reply', async () => {
+  await go(res, '/app/guardhouse');
+  await res.getByLabel('Message to the guardhouse').fill('Audit: is the pool open tonight?');
+  await res.getByRole('button', { name: 'Send message' }).click();
+  await expect(res.getByText('Audit: is the pool open tonight?')).toBeVisible(T);
+  await go(guard, '/guard/messages');
+  await guard.getByRole('button', { name: /A-15-07/ }).click();
+  await expect(guard.getByRole('region', { name: 'Conversation with A-15-07' }).getByText('Audit: is the pool open tonight?')).toBeVisible(T);
+  await guard.getByLabel('Reply to A-15-07').fill('Audit: yes, until 10pm.');
+  await guard.getByRole('button', { name: 'Send reply' }).click();
+  await go(res, '/app/guardhouse');
+  await expect(res.getByText('Audit: yes, until 10pm.')).toBeVisible(T);
+  await go(res, '/app/activity');
+  await expect(res.getByText('Guardhouse replied').first()).toBeVisible(T);
+});
+
+await step('Defect report: resident reports a problem with a photo; manager sees it and updates it; resident is notified', async () => {
+  const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAAEklEQVR4nGP4z8DAwMDAwMAAAAr2AQG5fYB3AAAAAElFTkSuQmCC', 'base64');
+  await go(res, '/app/report');
+  await res.getByRole('button', { name: 'Report an issue' }).click();
+  await res.getByLabel('Type').selectOption('Defect');
+  await res.getByLabel('What is the problem?').fill('Audit: corridor light broken');
+  await res.getByLabel('Where?').fill('Tower A, level 15 lift lobby');
+  await res.getByLabel('Photo of the problem').setInputFiles({ name: 'light.png', mimeType: 'image/png', buffer: png });
+  await expect(res.getByRole('img', { name: 'Photo of the problem' })).toBeVisible(T);
+  await res.getByRole('button', { name: 'Send report' }).click();
+  const card = res.locator('.card', { hasText: 'Audit: corridor light broken' });
+  await expect(card).toBeVisible(T);
+  const id = (await card.innerText()).match(/TK-\d+/)[0];
+  await go(portal, '/portal/community?tab=tickets');
+  await expect(portal.getByText('Audit: corridor light broken')).toBeVisible(T);
+  await expect(portal.getByRole('button', { name: `View photo for ${id}` })).toBeVisible(T);
+  await portal.getByLabel(`Change state of ${id}`).selectOption('Assigned');
+  await go(res, '/app/report');
+  await expect(res.locator('.card', { hasText: 'Audit: corridor light broken' }).getByText('Assigned')).toBeVisible(T);
+  await go(res, '/app/activity');
+  await expect(res.getByText(`${id} is assigned`)).toBeVisible(T);
+});
+
+await step('Move-in: resident books the service lift and pays the deposit; manager approves; lorry is expected at the gate; inspection closes it and refunds', async () => {
+  await go(res, '/app/move');
+  await res.getByRole('button', { name: 'Book a move' }).click();
+  await res.getByLabel('Moving company').fill('Audit Movers');
+  await res.getByLabel('Lorry plate').fill('AUD 1234');
+  await res.getByText('I accept the moving rules').click();
+  await res.getByRole('button', { name: 'Continue' }).click();
+  await res.getByRole('dialog').getByRole('button', { name: /Pay RM 500/ }).click();
+  await expect(res.getByText('Waiting for approval')).toBeVisible(T);
+  await go(portal, '/portal/permits');
+  const req = portal.locator('div.rounded-lg', { hasText: 'Move-in · A-15-07' }).filter({ hasText: 'Audit Movers' });
+  await req.getByRole('button', { name: 'Approve' }).click();
+  await expect(portal.getByText('Move approved')).toBeVisible(T);
+  const expected = await portal.evaluate(() => JSON.parse(localStorage.getItem('ezvision-condo-suite:v1')).state.visits.some((v) => v.plate === 'AUD 1234' && v.status === 'expected'));
+  if (!expected) throw new Error('lorry not on the expected list');
+  await go(res, '/app/move');
+  await expect(res.getByText('Approved', { exact: true })).toBeVisible(T);
+  await go(portal, '/portal/permits');
+  await portal.getByRole('button', { name: /Move-in · A-15-07/ }).click();
+  const dlg = portal.getByRole('dialog');
+  await dlg.getByText('Before the move').click();
+  await dlg.getByText('After the move').click();
+  await dlg.getByRole('button', { name: /Close and refund RM 500/ }).click();
+  await go(res, '/app/move');
+  await expect(res.getByText('Completed', { exact: true })).toBeVisible(T);
+  await expect(res.getByText(/refunded/)).toBeVisible(T);
 });
 
 await step('Guard shift handover: checklist, sign off, logged out', async () => {

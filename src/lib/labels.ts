@@ -1,4 +1,4 @@
-import type { Alert, AlertStatus, PermitStatus, Severity, Tone, VisitStatus, VisitType } from '@/data/types';
+import type { Alert, AlertStatus, PermitStatus, Severity, Ticket, Tone, VisitStatus, VisitType } from '@/data/types';
 import type { ChipTone } from '@/components/ui';
 
 export const sevTone: Record<Severity, ChipTone> = { critical: 'red', high: 'red', warning: 'amber', nuisance: 'blue', info: 'grey' };
@@ -25,3 +25,5 @@ export const permitTone: Record<PermitStatus, ChipTone> = {
 
 export const AVATAR_COLORS = ['#1D4FE0', '#14A38F', '#5B34B8', '#C2410C', '#0B1640', '#3A4468'];
 export const colorFor = (s: string) => AVATAR_COLORS[[...s].reduce((a, c) => a + c.charCodeAt(0), 0) % AVATAR_COLORS.length];
+
+export const ticketTone: Record<Ticket['state'], ChipTone> = { New: 'blue', Assigned: 'purple', 'In progress': 'amber', Investigating: 'amber', Monitoring: 'grey', Resolved: 'teal' };

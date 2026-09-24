@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, CalendarDays, Car, CheckCheck, ChevronRight, CreditCard, Hammer, Megaphone, Package, ShieldAlert, Users } from 'lucide-react';
+import { Bell, CalendarDays, Car, CheckCheck, ChevronRight, CreditCard, Hammer, Megaphone, MessageCircle, Package, ShieldAlert, Users, Wrench } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { Card, Empty } from '@/components/ui';
 import { Button } from '@/components/ui/Button';
@@ -13,6 +13,7 @@ const ICON: Record<ResidentNotice['kind'], [typeof Bell, string]> = {
   security: [ShieldAlert, 'bg-danger-soft text-danger-ink'], visitor: [Users, 'bg-brand-soft text-brand-ink'], parcel: [Package, 'bg-warn-soft text-warn-ink'],
   vehicle: [Car, 'bg-[#EEF1F7] text-muted-dark'], billing: [CreditCard, 'bg-brand-soft text-brand-ink'], announcement: [Megaphone, 'bg-grape-soft text-grape-ink'],
   booking: [CalendarDays, 'bg-teal-soft text-teal-dark'], permit: [Hammer, 'bg-[#EEF1F7] text-muted-dark'],
+  ticket: [Wrench, 'bg-warn-soft text-warn-ink'], message: [MessageCircle, 'bg-brand-soft text-brand-ink'],
 };
 const FILTERS: { key: 'all' | ResidentNotice['kind']; label: string }[] = [
   { key: 'all', label: 'All' }, { key: 'visitor', label: 'Visitors' }, { key: 'parcel', label: 'Parcels' }, { key: 'security', label: 'Security' }, { key: 'announcement', label: 'Announcements' }, { key: 'billing', label: 'Billing' },

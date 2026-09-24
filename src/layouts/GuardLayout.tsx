@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Link, NavLink, Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { AlertTriangle, ClipboardPen, Home, LogOut, Package, Route, ScanLine, UserPlus } from 'lucide-react';
+import { AlertTriangle, ClipboardPen, Home, LogOut, MessageCircle, Package, Route, ScanLine, UserPlus } from 'lucide-react';
 import { useCurrentGuard, useStore } from '@/store/useStore';
 import { PageOutlet } from '@/components/PageBoundary';
 import { Logo } from '@/components/vision';
@@ -15,6 +15,7 @@ const NAV = [
   { to: '/guard/walk-in', label: 'Walk-in', icon: UserPlus },
   { to: '/guard/verify', label: 'Verify', icon: ScanLine },
   { to: '/guard/parcels', label: 'Parcels', icon: Package },
+  { to: '/guard/messages', label: 'Messages', icon: MessageCircle },
   { to: '/guard/patrol', label: 'Patrol', icon: Route },
   { to: '/guard/report', label: 'Report', icon: ClipboardPen },
 ];
@@ -22,12 +23,15 @@ const NAV = [
 export default function GuardLayout() {
   const guardId = useStore((s) => s.session.guardId);
   const alerts = useStore((s) => s.alerts);
+  const messages = useStore((s) => s.messages);
   const logout = useStore((s) => s.logoutGuard);
   const guard = useCurrentGuard();
   const now = useNow(15000);
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const seen = useRef<Set<string>>(new Set(alerts.map((a) => a.id)));
+  const seenMsg = useRef<Set<string>>(new Set(messages.map((m) => m.id)));
+  const unreadMsgs = messages.filter((m) => m.from === 'resident' && !m.read).length;
 
   const open = alerts.filter((a) => a.status !== 'closed');
   const urgent = open.find((a) => a.status === 'open' && (a.severity === 'critical' || a.severity === 'high'));
@@ -42,6 +46,16 @@ export default function GuardLayout() {
     });
   }, [alerts]);
 
+  // Resident messages sent from the app (another tab) pop a toast on the tablet.
+  useEffect(() => {
+    messages.forEach((m) => {
+      if (!seenMsg.current.has(m.id)) {
+        seenMsg.current.add(m.id);
+        if (m.from === 'resident' && !pathname.startsWith('/guard/messages')) toast.info(`Message from ${m.unit}`, m.text);
+      }
+    });
+  }, [messages, pathname]);
+
   if (!guardId) return <Navigate to="/guard/login" replace />;
 
   const signOut = () => { logout(); toast.info('Signed out', 'Hand the tablet to the next guard.'); navigate('/guard/login'); };
@@ -50,12 +64,13 @@ export default function GuardLayout() {
     <div className="min-h-screen bg-night text-white">
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-[92px] flex-col items-center border-r border-night-line bg-night-deep py-4 md:flex">
         <Link to="/guard" aria-label="Gate console"><Logo dark size={40} iconOnly /></Link>
-        <nav aria-label="Guard" className="mt-6 flex flex-1 flex-col gap-1.5">
+        <nav aria-label="Guard" className="mt-6 flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto scrollbar-thin">
           {NAV.map((n) => (
             <NavLink key={n.to} to={n.to} end={n.end} className={({ isActive }) => cn('relative flex h-[62px] w-[72px] flex-col items-center justify-center gap-1 rounded-2xl text-[11px] font-semibold transition-colors', isActive ? 'bg-brand text-white' : 'text-muted-light hover:bg-night-panel hover:text-white')}>
               <n.icon className="h-[22px] w-[22px]" aria-hidden />
               {n.label}
               {n.label === 'Alerts' && open.length > 0 && <span className="absolute right-2 top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-danger-dot px-1 text-[10.5px] font-bold">{open.length}</span>}
+              {n.label === 'Messages' && unreadMsgs > 0 && <span className="absolute right-2 top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-danger-dot px-1 text-[10.5px] font-bold">{unreadMsgs}</span>}
             </NavLink>
           ))}
         </nav>

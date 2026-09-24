@@ -1,6 +1,6 @@
 import { ago } from '@/lib/utils';
 import type {
-  Alert, Approval, Announcement, AuditEntry, Bill, Booking, Checkpoint, Facility, DataRequest, Guard, LiftBooking, Parcel, Permit,
+  Alert, Approval, Announcement, AuditEntry, Bill, Booking, Checkpoint, Facility, DataRequest, Guard, GuardMessage, LiftBooking, Parcel, Permit,
   ResidentNotice, Retention, Rule, Ticket, UnitRecord, UnknownFace, UnknownPlate, Visit, WatchEntry,
 } from './types';
 
@@ -11,6 +11,7 @@ export const SITE = {
   units: 612,
   cameras: 48,
   camerasOnline: 46,
+  guardhousePhone: '+60 3-7890 1234',
 };
 
 export const RESIDENT_UNIT = 'A-15-07';
@@ -190,16 +191,16 @@ export function makeSeed() {
   ];
 
   const liftBookings: LiftBooking[] = [
-    { id: 'lb-1', date: dayAt(-2, 10), slot: '10:00 to 13:00', what: 'Move-in', unit: 'A-12-04', lift: 'Tower A service lift', kind: 'move_in' },
+    { id: 'lb-1', date: dayAt(-2, 10), slot: '10:00 to 13:00', what: 'Move-in', unit: 'A-12-04', lift: 'Tower A service lift', kind: 'move_in', status: 'completed', mover: 'Lori Express Movers', lorryPlate: 'BPK 3321', crew: 4, deposit: 500, depositPaid: true, depositRefunded: true, checklist: { pre: true, post: true } },
     { id: 'lb-2', date: dayAt(0, 14), slot: '14:00 to 17:00', what: 'Sofa delivery', unit: 'C-18-02', lift: 'Tower C service lift', kind: 'delivery' },
-    { id: 'lb-3', date: dayAt(1, 9), slot: '09:00 to 12:00', what: 'Move-out', unit: 'B-06-10', lift: 'Tower B service lift', kind: 'move_out' },
-    { id: 'lb-4', date: dayAt(3, 9), slot: '09:00 to 13:00', what: 'Move-in', unit: 'B-06-10', lift: 'Tower B service lift', kind: 'move_in' },
+    { id: 'lb-3', date: dayAt(1, 9), slot: '09:00 to 12:00', what: 'Move-out', unit: 'B-06-10', lift: 'Tower B service lift', kind: 'move_out', status: 'approved', mover: 'Pindah Mudah Sdn Bhd', lorryPlate: 'WTC 8810', crew: 5, deposit: 500, depositPaid: true, checklist: { pre: false, post: false } },
+    { id: 'lb-4', date: dayAt(3, 9), slot: '09:00 to 12:00', what: 'Move-in', unit: 'C-09-10', lift: 'Tower C service lift', kind: 'move_in', status: 'requested', requestedBy: 'resident', mover: 'KL Home Movers', lorryPlate: 'VGH 2204', crew: 3, deposit: 500, depositPaid: true, checklist: { pre: false, post: false } },
   ];
 
   const facilities: Facility[] = [
     { id: 'fc-1', name: 'Function hall', kind: 'hall', fee: 150, deposit: 300, maxHours: 5, opens: 8, closes: 23, advanceDays: 60, note: 'Up to 80 guests. Guest passes are created for you.', active: true },
-    { id: 'fc-2', name: 'BBQ pit 1', kind: 'bbq', fee: 30, deposit: 100, maxHours: 4, opens: 10, closes: 23, advanceDays: 30, note: 'Near the pool. Bring your own charcoal.', active: true },
-    { id: 'fc-3', name: 'BBQ pit 2', kind: 'bbq', fee: 30, deposit: 100, maxHours: 4, opens: 10, closes: 23, advanceDays: 30, note: 'Garden side, covered.', active: true },
+    { id: 'fc-2', name: 'BBQ pit 1', kind: 'bbq', fee: 30, deposit: 100, maxHours: 4, opens: 8, closes: 23, advanceDays: 30, note: 'Near the pool. Bring your own charcoal.', active: true },
+    { id: 'fc-3', name: 'BBQ pit 2', kind: 'bbq', fee: 30, deposit: 100, maxHours: 4, opens: 8, closes: 23, advanceDays: 30, note: 'Garden side, covered.', active: true },
     { id: 'fc-4', name: 'Squash court', kind: 'court', fee: 0, deposit: 0, maxHours: 1, opens: 7, closes: 22, advanceDays: 7, note: 'Free. One hour per unit per day.', active: true },
     { id: 'fc-5', name: 'Tennis court', kind: 'court', fee: 0, deposit: 0, maxHours: 2, opens: 7, closes: 22, advanceDays: 7, note: 'Free. Lights until 22:00.', active: true },
     { id: 'fc-6', name: 'Gym studio', kind: 'gym', fee: 0, deposit: 0, maxHours: 1, opens: 7, closes: 22, advanceDays: 7, note: 'For private classes. The main gym needs no booking.', active: true },
@@ -287,6 +288,12 @@ export function makeSeed() {
     { id: 'TK-1169', title: 'Noise from renovation after 6pm', meta: 'RN-0412 · C-21-02 · warning issued', evidence: false, state: 'Monitoring', unit: 'C-21-02' },
   ];
 
+  const messages: GuardMessage[] = [
+    { id: 'gm-1', unit: 'A-15-07', from: 'resident', text: 'Hi, my aircond technician will come around 3pm today. Please let him up.', at: ago(26 * 60), read: true },
+    { id: 'gm-2', unit: 'A-15-07', from: 'guard', text: 'Noted. We will call you when he arrives.', at: ago(26 * 60 - 3), read: true },
+    { id: 'gm-3', unit: 'B-12-05', from: 'resident', text: 'There is a car parked in my bay B2-214 again. Grey Myvi.', at: ago(9), read: false },
+  ];
+
   const dataRequests: DataRequest[] = [
     { id: 'dr-1', title: 'Access request · B-03-11', meta: 'Resident asked for all visitor records for their unit · due 10 Oct', state: 'In progress' },
     { id: 'dr-2', title: 'Deletion request · visitor', meta: 'Guest of C-09-10 asked to delete her selfie · due 12 Oct', state: 'New' },
@@ -338,7 +345,7 @@ export function makeSeed() {
 
   return {
     alerts, visits, approvals, parcels, unknownFaces, unknownPlates, watchlist, permits, liftBookings, facilities, bookings, announcements, rules, notices, bills,
-    checkpoints, guards, tickets, dataRequests, audit, retention, units,
+    checkpoints, guards, tickets, messages, dataRequests, audit, retention, units,
     patrolStartedAt: ago(21),
     nightMode: true,
     feeRestriction: true,

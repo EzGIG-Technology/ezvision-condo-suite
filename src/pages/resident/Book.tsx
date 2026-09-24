@@ -98,7 +98,7 @@ export default function ResidentBook() {
             return (
               <button key={h} type="button" disabled={off} aria-pressed={inSel} onClick={() => setStart(h)}
                 className={cn('h-11 rounded-xl text-[13px] font-semibold', off ? 'cursor-not-allowed bg-[#EEF1F7] text-[#A7B0C8] line-through' : inSel ? 'bg-brand text-white' : 'border border-line bg-white hover:border-brand')}>
-                {hourLabel(h)}
+                {h}:00
               </button>
             );
           })}

@@ -89,7 +89,7 @@ async function run() {
     const page = await context.newPage();
     let pageErrors = [];
     page.on('pageerror', (e) => pageErrors.push(String(e.message).slice(0, 200)));
-    page.on('console', (m) => { if (m.type() === 'error' && !/ERR_TUNNEL|fonts\.g/.test(m.text())) pageErrors.push('console: ' + m.text().slice(0, 200)); });
+    page.on('console', (m) => { if (m.type() === 'error' && !/ERR_TUNNEL|ERR_CERT_AUTHORITY_INVALID|fonts\.g/.test(m.text())) pageErrors.push('console: ' + m.text().slice(0, 200)); });
     let downloads = 0; page.on('download', () => downloads++);
     let popups = 0; context.on('page', (p) => { popups++; p.close().catch(() => {}); });
     page.on('dialog', (d) => d.dismiss().catch(() => {}));

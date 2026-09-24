@@ -172,6 +172,28 @@ export interface LiftBooking {
   unit: string;
   lift: string;
   kind: 'move_in' | 'move_out' | 'delivery';
+  /** Missing on older records, which count as approved. */
+  status?: 'requested' | 'approved' | 'rejected' | 'completed';
+  requestedBy?: 'resident' | 'management';
+  mover?: string;
+  lorryPlate?: string;
+  crew?: number;
+  deposit?: number;
+  depositPaid?: boolean;
+  depositRefunded?: boolean;
+  /** Pre- and post-move inspection of the lift and common areas. */
+  checklist?: { pre: boolean; post: boolean };
+  visitId?: string;
+}
+
+export interface GuardMessage {
+  id: string;
+  unit: string;
+  from: 'resident' | 'guard';
+  text: string;
+  at: string;
+  /** Read by the other side. */
+  read: boolean;
 }
 
 export type FacilityKind = 'hall' | 'bbq' | 'court' | 'gym' | 'pool' | 'room' | 'other';
@@ -241,7 +263,7 @@ export interface ResidentNotice {
   title: string;
   body: string;
   at: string;
-  kind: 'security' | 'visitor' | 'parcel' | 'vehicle' | 'billing' | 'announcement' | 'booking' | 'permit';
+  kind: 'security' | 'visitor' | 'parcel' | 'vehicle' | 'billing' | 'announcement' | 'booking' | 'permit' | 'ticket' | 'message';
   read: boolean;
   link?: string;
 }
@@ -285,6 +307,8 @@ export interface Guard {
   pin: string;
 }
 
+export type TicketCategory = 'Defect' | 'Cleanliness' | 'Noise' | 'Parking' | 'Security' | 'Other';
+
 export interface Ticket {
   id: string;
   title: string;
@@ -292,6 +316,13 @@ export interface Ticket {
   evidence: boolean;
   state: 'New' | 'Assigned' | 'In progress' | 'Investigating' | 'Monitoring' | 'Resolved';
   unit?: string;
+  category?: TicketCategory;
+  location?: string;
+  details?: string;
+  /** Small JPEG data URL taken by the resident. */
+  photo?: string;
+  raisedBy?: 'resident' | 'management' | 'camera';
+  createdAt?: string;
 }
 
 export interface DataRequest {
