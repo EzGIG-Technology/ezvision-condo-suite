@@ -138,7 +138,7 @@ function UnitDetail({ unitId }: { unitId: string }) {
   const sendMsg = () => {
     if (!msgTitle.trim()) return toast.error('Add a subject first');
     addNotice({ unit: u.unit, title: msgTitle, body: msgBody || 'Message from management.', kind: 'announcement' });
-    log({ who: 'Farah Hanim', role: 'Building Manager', action: 'Sent', record: `Message to ${u.unit}` });
+    log({ who: useStore.getState().session.portal?.name ?? 'Farah Hanim', role: 'Building Manager', action: 'Sent', record: `Message to ${u.unit}` });
     toast.success(`Message sent to ${u.unit}`, 'Delivered by app push and WhatsApp.');
     setMsg(false); setMsgTitle(''); setMsgBody('');
   };
@@ -166,7 +166,7 @@ function UnitDetail({ unitId }: { unitId: string }) {
       vehicles: tRevoke ? [] : u.vehicles,
       cards: tRevoke ? u.cards.map((c) => ({ ...c, active: false, note: 'Revoked on tenant change' })) : u.cards,
     });
-    log({ who: 'Farah Hanim', role: 'Building Manager', action: 'Changed', record: `Tenant for ${u.unit}` });
+    log({ who: useStore.getState().session.portal?.name ?? 'Farah Hanim', role: 'Building Manager', action: 'Changed', record: `Tenant for ${u.unit}` });
     toast.success('Tenant changed', tRevoke ? 'Old cards, plates and face templates were revoked.' : undefined);
     setTenant(false); setTName(''); setTEnd('');
   };

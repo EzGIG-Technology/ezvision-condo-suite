@@ -13,6 +13,7 @@ import { SITE } from '@/data/seed';
 import { cn, relative } from '@/lib/utils';
 import { useNow } from '@/lib/hooks';
 import { toast } from '@/store/toast';
+import { canOpen, PORTAL_ROLES, roleOf } from '@/lib/roles';
 
 type NavItem = { to: string; label: string; icon: typeof LayoutGrid; badge?: () => number; tone?: 'red' | 'blue' };
 
@@ -37,6 +38,7 @@ export const PORTAL_TITLES: Record<string, [string, string]> = {
 };
 
 function useNav() {
+  const role = useStore((s) => s.session.portal?.role);
   const alerts = useStore((s) => s.alerts);
   const faces = useStore((s) => s.unknownFaces);
   const permits = useStore((s) => s.permits);
@@ -71,8 +73,10 @@ function useNav() {
         { to: '/portal/settings', label: 'Site settings', icon: SettingsIcon },
       ] },
     ];
-    return groups;
-  }, [alerts, faces, permits]);
+    return groups
+      .map((g) => ({ ...g, items: g.items.filter((it) => canOpen(role, it.to.split('/')[2])) }))
+      .filter((g) => g.items.length);
+  }, [alerts, faces, permits, role]);
 }
 
 function Sidebar({ onNavigate, onSiteSwitch }: { onNavigate?: () => void; onSiteSwitch: () => void }) {
@@ -122,7 +126,7 @@ function Sidebar({ onNavigate, onSiteSwitch }: { onNavigate?: () => void; onSite
           <div className="text-[11px] text-[#8D9CC7]">Edge server · 38% GPU · 11 ms</div>
         </Link>
         <div className="flex items-center gap-2.5 px-1">
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-teal-bright text-[13px] font-extrabold text-[#062A26]">FH</span>
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-teal-bright text-[13px] font-extrabold text-[#062A26]">{PORTAL_ROLES.find((r) => r.role === roleOf(session?.role))?.initials ?? 'FH'}</span>
           <span className="flex min-w-0 flex-1 flex-col">
             <span className="truncate text-[13px] font-bold text-white">{session?.name ?? 'Farah Hanim'}</span>
             <span className="text-[11.5px] text-[#8D9CC7]">{session?.role ?? 'Building Manager'}</span>
@@ -227,6 +231,17 @@ function SiteModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   );
 }
 
+function NoAccess({ role, page }: { role: string; page: string }) {
+  return (
+    <div className="card flex flex-col items-center gap-3 px-6 py-14 text-center" role="alert">
+      <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-ice text-muted"><Lock className="h-5 w-5" /></span>
+      <h2 className="text-lg font-extrabold">{page} is not part of your role</h2>
+      <p className="max-w-md text-[13.5px] text-muted">Signed in as {role}. Ask the building manager if you need access. Every attempt to open a page is recorded in the audit log.</p>
+      <Link to="/portal/dashboard" className="font-bold text-brand">Go to the Command Center</Link>
+    </div>
+  );
+}
+
 export default function PortalLayout() {
   const session = useStore((s) => s.session.portal);
   const openCount = useStore((s) => s.alerts.filter((a) => a.status !== 'closed').length);
@@ -272,12 +287,12 @@ export default function PortalLayout() {
           <div className="hidden items-center gap-1.5 text-xs font-semibold text-muted sm:flex"><span>{SITE.name}</span><span aria-hidden>/</span><span>{crumb}</span></div>
           <h1 className="truncate text-lg font-extrabold tracking-tight lg:text-[21px]">{title}</h1>
         </div>
-        <form onSubmit={submit} role="search" className="hidden h-10 w-72 items-center gap-2 rounded-[10px] border border-line bg-ice px-3 text-muted md:flex xl:w-80">
+        {canOpen(session.role, 'search') && <form onSubmit={submit} role="search" className="hidden h-10 w-72 items-center gap-2 rounded-[10px] border border-line bg-ice px-3 text-muted md:flex xl:w-80">
           <Search className="h-4 w-4" aria-hidden />
           <label htmlFor="global-search" className="sr-only">Search</label>
           <input id="global-search" value={q} onChange={(e) => setQ(e.target.value)} type="search" placeholder='Plate, unit, name or "red Myvi last night"' className="min-w-0 flex-1 bg-transparent text-[13px] text-navy outline-none placeholder:text-[#8C95B0]" />
-        </form>
-        <button type="button" aria-label="Search" onClick={() => navigate('/portal/search')} className="flex h-10 w-10 items-center justify-center rounded-[10px] border border-line bg-white md:hidden"><Search className="h-[18px] w-[18px]" /></button>
+        </form>}
+        {canOpen(session.role, 'search') && <button type="button" aria-label="Search" onClick={() => navigate('/portal/search')} className="flex h-10 w-10 items-center justify-center rounded-[10px] border border-line bg-white md:hidden"><Search className="h-[18px] w-[18px]" /></button>}
         <button type="button" onClick={() => setAgent(true)} className="hidden h-10 items-center gap-2 whitespace-nowrap rounded-full bg-teal-soft px-3.5 text-[12.5px] font-bold text-teal-dark hover:bg-[#d2efea] xl:flex">
           <span className="h-2 w-2 animate-pulse2 rounded-full bg-teal shadow-[0_0_0_4px_rgba(20,163,143,.2)]" />
           <Sparkles className="h-3.5 w-3.5" aria-hidden />AI Agent · {SITE.cameras} cameras
@@ -292,7 +307,7 @@ export default function PortalLayout() {
         </button>
       </header>
       <main className="mx-auto max-w-[1480px] px-4 py-5 sm:px-6 lg:px-8 lg:py-6">
-        <PageOutlet />
+        {key in PORTAL_TITLES && !canOpen(session.role, key) ? <NoAccess role={roleOf(session.role)} page={title} /> : <PageOutlet />}
       </main>
       <NotificationsDrawer open={notif} onClose={() => setNotif(false)} />
       <AgentModal open={agent} onClose={() => setAgent(false)} />

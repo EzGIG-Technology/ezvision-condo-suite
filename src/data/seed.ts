@@ -222,27 +222,75 @@ export function makeSeed() {
     { id: 'an-2', title: 'EGM e-voting is open', body: 'Vote on installing EV chargers at B1 before 30 September.', audience: 'All towers', channels: ['App push', 'Email'], sentAt: ago(5 * 1440), sentBy: 'JMB Secretary' },
   ];
 
-  const R = (id: string, group: Rule['group'], name: string, cameras: number, schedule: string, enabled: boolean, firedWeek: number, falseWeek: number, dwellMin = 0, sensitivity = 7): Rule => ({
-    id, group, name, cameras, schedule, enabled, sensitivity, dwellMin, firedWeek, falseWeek,
-    actions: { talkDown: group === 'Carpark' || group === 'Perimeter', alertGuard: true, dispatch: group !== 'Nuisance', escalate: group === 'Perimeter' || group === 'Access' || group === 'Safety' },
+  type RuleOpts = { dwellMin?: number; sensitivity?: number; zone: string; tier: NonNullable<Rule['tier']>; conditions?: string[] };
+  const R = (id: string, group: Rule['group'], name: string, cameras: number, schedule: string, enabled: boolean, firedWeek: number, falseWeek: number, o: RuleOpts): Rule => ({
+    id, group, name, cameras, schedule, enabled, sensitivity: o.sensitivity ?? 7, dwellMin: o.dwellMin ?? 0, firedWeek, falseWeek, zone: o.zone, tier: o.tier, conditions: o.conditions,
+    actions: {
+      talkDown: group === 'Carpark' || group === 'Perimeter',
+      alertGuard: true,
+      dispatch: group !== 'Nuisance' && group !== 'Audio',
+      escalate: group === 'Perimeter' || group === 'Access' || group === 'Safety' || group === 'Fire',
+    },
   });
+  // The full EzVision detection catalogue from the proposal, grouped as in its use-case chapters.
   const rules: Rule[] = [
-    R('r-1', 'Access', 'Unregistered person', 9, 'Always', true, 84, 6),
-    R('r-2', 'Access', 'Tailgating and piggybacking', 6, 'Always', true, 38, 3),
-    R('r-3', 'Access', 'Registered visitor in wrong block', 12, 'Always', true, 11, 2),
-    R('r-4', 'Perimeter', 'Fence tripwire, north and east', 8, '20:00 to 07:00', true, 3, 0),
-    R('r-5', 'Perimeter', 'Roof, M&E and substation entry', 5, 'Always', true, 1, 0),
-    R('r-6', 'Carpark', 'Loitering or door-checking', 3, '22:00 to 06:00', true, 9, 1, 3),
-    R('r-7', 'Carpark', 'Fire lane and ramp blocking', 6, 'Always', true, 14, 2, 5),
-    R('r-8', 'Carpark', 'Visitor overstay', 4, 'Always', true, 27, 0),
-    R('r-9', 'Safety', 'Fall or collapse', 14, 'Always', true, 2, 1),
-    R('r-10', 'Safety', 'Child alone near pool', 2, '07:00 to 22:00', true, 1, 0),
-    R('r-11', 'Safety', 'Fighting', 20, 'Always', false, 0, 0),
-    R('r-12', 'Nuisance', 'Bulky item dumping', 3, 'Always', true, 4, 0),
-    R('r-13', 'Nuisance', 'Objects thrown from height', 4, 'Always', true, 2, 1),
-    R('r-14', 'Nuisance', 'Smoking in lobby and lifts', 18, 'Always', false, 0, 0),
-    R('r-15', 'Operations', 'Guardhouse unattended over 5 min', 1, 'Always', true, 2, 0, 5),
-    R('r-16', 'Operations', 'Camera offline, moved or covered', 48, 'Always', true, 3, 0),
+    // Unauthorised entry
+    R('r-1', 'Access', 'Unregistered person', 9, 'Always', true, 84, 6, { zone: 'Gates, lobbies and turnstiles', tier: 'Core' }),
+    R('r-17', 'Access', 'Unknown plate at the barrier', 4, 'Always', true, 27, 0, { zone: 'Main gate ANPR lanes', tier: 'Core' }),
+    R('r-19', 'Access', 'Watchlist person or vehicle', 48, 'Always', true, 2, 0, { zone: 'All cameras', tier: 'Core', sensitivity: 8 }),
+    R('r-20', 'Access', 'Visitor or contractor on site after pass ends', 12, 'Always', true, 9, 0, { zone: 'Exits and lobbies', tier: 'Core', dwellMin: 15 }),
+    R('r-21', 'Access', 'Same unknown face or plate on several days', 48, 'Always', true, 3, 0, { zone: 'All cameras', tier: 'Core' }),
+    R('r-2', 'Access', 'Tailgating and piggybacking', 6, 'Always', true, 38, 3, { zone: 'Lobby doors and turnstiles', tier: 'Secure' }),
+    R('r-18', 'Access', 'Two vehicles on one barrier lift', 4, 'Always', true, 5, 0, { zone: 'Main gate ANPR lanes', tier: 'Secure' }),
+    R('r-3', 'Access', 'Registered visitor in wrong block', 12, 'Always', true, 11, 2, { zone: 'Block entrances', tier: 'Secure' }),
+    // A. Perimeter and access
+    R('r-4', 'Perimeter', 'Fence tripwire, north and east', 8, '20:00 to 07:00', true, 3, 0, { zone: 'Fence line and boundary walls', tier: 'Secure' }),
+    R('r-22', 'Perimeter', 'Side or back gate breach', 3, 'Always', true, 4, 0, { zone: 'Side and back gates', tier: 'Secure' }),
+    R('r-5', 'Perimeter', 'Roof, M&E, substation, water tank and genset entry', 5, 'Always', true, 1, 0, { zone: 'Restricted zones', tier: 'Secure' }),
+    R('r-23', 'Perimeter', 'People at the pool, gym or BBQ after hours', 4, '22:00 to 06:00', true, 6, 1, { zone: 'Facility deck', tier: 'Secure', conditions: ['Facility is closed'] }),
+    R('r-24', 'Perimeter', 'Fire door held or forced open', 14, 'Always', true, 7, 1, { zone: 'Fire exits and stair doors', tier: 'Secure', dwellMin: 2 }),
+    R('r-25', 'Perimeter', 'Loitering at the lobby, lift lobby or gate', 10, '22:00 to 06:00', true, 5, 0, { zone: 'Lobbies and gates', tier: 'Secure', dwellMin: 5, conditions: ['Person is not a resident'] }),
+    R('r-26', 'Perimeter', 'Knife, machete or other weapon', 6, 'Always', true, 0, 0, { zone: 'Main gate and lobbies', tier: 'Secure', sensitivity: 8 }),
+    // B. Carpark and vehicles
+    R('r-8', 'Carpark', 'Visitor overstay', 4, 'Always', true, 27, 0, { zone: 'Gate ANPR, entry and exit', tier: 'Secure' }),
+    R('r-27', 'Carpark', "Car in another unit's bay", 22, 'Always', true, 12, 1, { zone: 'Basement carpark', tier: 'Secure', dwellMin: 10, conditions: ['Vehicle is not registered'] }),
+    R('r-7', 'Carpark', 'Fire lane and hydrant blocking', 6, 'Always', true, 14, 2, { zone: 'Fire lanes', tier: 'Secure', dwellMin: 5 }),
+    R('r-28', 'Carpark', 'Double parking and ramp obstruction', 8, 'Always', true, 6, 0, { zone: 'Aisles and ramps', tier: 'Secure', dwellMin: 5 }),
+    R('r-29', 'Carpark', 'Wrong-way driving on ramps', 4, 'Always', true, 2, 0, { zone: 'Ramps', tier: 'Secure' }),
+    R('r-30', 'Carpark', 'Abandoned vehicle, unmoved 14 days', 22, 'Always', true, 1, 0, { zone: 'Basement carpark', tier: 'Secure' }),
+    R('r-6', 'Carpark', 'Door-checking between parked cars', 3, '22:00 to 06:00', true, 9, 1, { zone: 'Basement carpark', tier: 'Secure', dwellMin: 3, conditions: ['After midnight (00:00 to 06:00)', 'Person is not a resident'] }),
+    R('r-31', 'Carpark', 'Carpark level full (live bay count)', 6, 'Always', true, 4, 0, { zone: 'Carpark entries and each level', tier: 'Secure' }),
+    // C. Resident and people safety
+    R('r-9', 'Safety', 'Fall or collapse', 14, 'Always', true, 2, 1, { zone: 'Lobbies, corridors, pool and gym', tier: 'Premium' }),
+    R('r-11', 'Safety', 'Fighting', 20, 'Always', false, 0, 0, { zone: 'Common areas', tier: 'Premium' }),
+    R('r-10', 'Safety', 'Child alone near pool', 2, '07:00 to 22:00', true, 1, 0, { zone: 'Pool deck', tier: 'Premium' }),
+    R('r-32', 'Safety', 'Crowd or unusual gathering', 8, 'Always', true, 1, 0, { zone: 'Lobbies and facility areas', tier: 'Premium', dwellMin: 5, conditions: ['More than 10 people'] }),
+    R('r-33', 'Safety', 'Person fallen or not moving in a lift', 12, 'Always', true, 0, 0, { zone: 'Lift cars', tier: 'Premium', dwellMin: 1 }),
+    // D. Fire and hazard
+    R('r-34', 'Fire', 'Smoke or flame, before the sensors trigger', 10, 'Always', true, 1, 0, { zone: 'Carpark, bin centre and M&E rooms', tier: 'Premium', sensitivity: 8 }),
+    R('r-35', 'Fire', 'Basement flooding or water leak', 6, 'Always', true, 2, 0, { zone: 'Basement and pump rooms', tier: 'Premium' }),
+    // E. Nuisance and property
+    R('r-12', 'Nuisance', 'Bulky item dumping', 3, 'Always', true, 4, 0, { zone: 'Bin centre, loading bay and corridors', tier: 'Premium' }),
+    R('r-13', 'Nuisance', 'Objects thrown from height', 4, 'Always', true, 2, 1, { zone: 'Facade and podium (upward cameras)', tier: 'Premium' }),
+    R('r-36', 'Nuisance', 'Vandalism of lifts, walls or mailboxes', 16, 'Always', true, 1, 0, { zone: 'Lifts and lobbies', tier: 'Premium' }),
+    R('r-14', 'Nuisance', 'Smoking in lobby and lifts', 18, 'Always', false, 0, 0, { zone: 'Lobby and lift lobbies', tier: 'Premium' }),
+    R('r-37', 'Nuisance', 'Pets in the pool, gym or lifts', 10, 'Always', true, 3, 0, { zone: 'Facility areas and lifts', tier: 'Premium' }),
+    R('r-38', 'Nuisance', 'Littering in common areas', 12, 'Always', false, 0, 0, { zone: 'Lobbies and corridors', tier: 'Premium' }),
+    // F. Contractor and delivery control
+    R('r-39', 'Contractors', 'Contractor on site outside permit hours', 12, 'Outside permit hours', true, 3, 0, { zone: 'Block entrances and lift lobbies', tier: 'Core' }),
+    R('r-40', 'Contractors', 'Contractor on a floor not on the permit', 12, 'Always', true, 2, 0, { zone: 'Lift lobbies', tier: 'Core' }),
+    R('r-41', 'Contractors', 'Rider beyond the drop-off zone', 12, 'Always', true, 5, 0, { zone: 'Lobby and lift lobbies', tier: 'Core', conditions: ['Resident has not allowed unit delivery'] }),
+    R('r-42', 'Contractors', 'Parcel taken by someone other than the recipient', 2, 'Always', true, 0, 0, { zone: 'Parcel room', tier: 'Core' }),
+    // G. Guard accountability and system health
+    R('r-15', 'Operations', 'Guardhouse unattended over 5 min', 1, 'Always', true, 2, 0, { zone: 'Inside the guardhouse', tier: 'Premium', dwellMin: 5 }),
+    R('r-43', 'Operations', 'Patrol checkpoint missed', 12, 'Always', true, 1, 0, { zone: 'Checkpoint cameras', tier: 'Premium' }),
+    R('r-44', 'Operations', 'Guard response over 3 min', 48, 'Always', true, 2, 0, { zone: 'All alert cameras', tier: 'Premium' }),
+    R('r-16', 'Operations', 'Camera offline, moved or covered', 48, 'Always', true, 3, 0, { zone: 'All cameras', tier: 'Secure' }),
+    R('r-45', 'Operations', 'Unusual activity for this camera (learned normal)', 48, '22:00 to 06:00', true, 4, 1, { zone: 'All cameras', tier: 'Premium' }),
+    // Audio from camera microphones
+    R('r-46', 'Audio', 'Glass breaking or loud bang', 10, 'Always', true, 1, 0, { zone: 'Cameras with microphones', tier: 'Premium' }),
+    R('r-47', 'Audio', 'Screaming or a call for help', 10, 'Always', true, 0, 0, { zone: 'Cameras with microphones', tier: 'Premium' }),
+    R('r-48', 'Audio', 'Loud noise late at night', 10, '23:00 to 07:00', true, 3, 0, { zone: 'Cameras with microphones', tier: 'Premium', dwellMin: 10 }),
   ];
 
   const notices: ResidentNotice[] = [

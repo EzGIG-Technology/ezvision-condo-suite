@@ -109,8 +109,9 @@ export const qrPath = (seedText: string) => {
 export const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
 /** Trigger a real file download in the browser. */
-export const downloadFile = (filename: string, content: string, mime = 'text/csv;charset=utf-8') => {
-  const blob = new Blob([content], { type: mime });
+export const downloadFile = (filename: string, content: string, mime = 'text/csv;charset=utf-8') => downloadBlob(filename, new Blob([content], { type: mime }));
+
+export const downloadBlob = (filename: string, blob: Blob) => {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;

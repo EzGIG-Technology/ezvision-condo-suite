@@ -34,13 +34,13 @@ export default function Privacy() {
 
   const changeRetention = (id: string, data: string, from: string, to: string) => {
     setRetention(id, to);
-    log({ who: 'Farah Hanim', role: 'Building Manager', action: 'Changed', record: `Retention for ${data.toLowerCase()}, ${from} to ${to}` });
+    log({ who: useStore.getState().session.portal?.name ?? 'Farah Hanim', role: 'Building Manager', action: 'Changed', record: `Retention for ${data.toLowerCase()}, ${from} to ${to}` });
     toast.success('Retention updated', `${data}: ${to}. Older data is deleted tonight at 02:00.`);
   };
 
   const exportAudit = () => {
     downloadFile(`audit-log-${todayStamp()}.csv`, toCsv([['Time', 'Who', 'Role', 'Action', 'Record'], ...audit.map((a) => [when(a.at), a.who, a.role, a.action, a.record])]));
-    log({ who: 'Farah Hanim', role: 'Building Manager', action: 'Exported', record: 'PDPA audit log' });
+    log({ who: useStore.getState().session.portal?.name ?? 'Farah Hanim', role: 'Building Manager', action: 'Exported', record: 'PDPA audit log' });
     toast.success('Audit log exported');
   };
 

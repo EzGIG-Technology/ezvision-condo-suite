@@ -4,8 +4,8 @@ import { useStore } from '@/store/useStore';
 import { Card, CardHeader, Checkbox, Chip, Field, Input, Modal, Select, Switch } from '@/components/ui';
 import { Button } from '@/components/ui/Button';
 import { BarChart } from '@/components/charts';
-import { SITE } from '@/data/seed';
-import { downloadFile, todayStamp, toCsv, when } from '@/lib/utils';
+import { exportReport, type ExportFormat } from '@/lib/export';
+import { pilotMetrics, REPORTS } from '@/lib/reports';
 import { toast } from '@/store/toast';
 
 interface Schedule { id: string; name: string; every: string; to: string; on: boolean }
@@ -25,62 +25,35 @@ export default function Reports() {
   const [sched, setSched] = useState(false);
   const [kind, setKind] = useState('Incidents');
   const [range, setRange] = useState('Last 7 days');
-  const [fmt, setFmt] = useState('CSV');
+  const [fmt, setFmt] = useState('PDF');
   const [sName, setSName] = useState('Daily security summary');
   const [sEvery, setSEvery] = useState('Every day at 07:00');
   const [sTo, setSTo] = useState('');
   const [includeClips, setIncludeClips] = useState(false);
 
-  const build = (name: string): [string, string] => {
-    const s = state();
-    switch (name) {
-      case 'Incidents':
-        return ['incidents', toCsv([['Ref', 'Time', 'Title', 'Where', 'Severity', 'Status', 'Owner', 'Outcome'], ...s.alerts.map((a) => [a.ref, when(a.at), a.title, a.where, a.severity, a.status, a.owner, a.outcome])])];
-      case 'Visitors':
-        return ['visitors', toCsv([['Name', 'Type', 'Unit', 'Host', 'Status', 'Check in', 'Check out', 'Entry', 'Plate'], ...s.visits.map((v) => [v.name, v.type, v.unit, v.host, v.status, when(v.checkIn), when(v.checkOut), v.entry, v.plate])])];
-      case 'Unregistered entries':
-        return ['unregistered', toCsv([['ID', 'Where', 'When', 'Description', 'Status', 'Resolution'], ...s.unknownFaces.map((f) => [f.id, f.where, when(f.at), f.description, f.status, f.resolution])])];
-      case 'Guard scorecard':
-        return ['guards', toCsv([['Guard', 'Shift', 'Alerts closed', 'Avg response', 'Patrol %', 'Rating'], ...s.guards.map((g) => [g.name, g.shift, g.alertsClosed, g.avgResponse, g.patrolPct, g.rating])])];
-      case 'Parcels':
-        return ['parcels', toCsv([['Unit', 'Recipient', 'Courier', 'Shelf', 'Logged', 'Status', 'Collected'], ...s.parcels.map((p) => [p.unit, p.recipient, p.courier, p.shelf, when(p.loggedAt), p.status, when(p.collectedAt)])])];
-      case 'Permits':
-        return ['permits', toCsv([['Permit', 'Unit', 'Scope', 'Contractor', 'Start', 'End', 'Status', 'Deposit'], ...s.permits.map((p) => [p.id, p.unit, p.scope, p.contractor, p.start, p.end, p.status, p.deposit])])];
-      default: {
-        const open = s.alerts.filter((a) => a.status !== 'closed').length;
-        const txt = [`${SITE.name} — ${name}`, `Generated ${new Date().toLocaleString('en-GB')}`, '', `Alerts today: ${s.alerts.length} (${open} open)`, `Visitors on site: ${s.visits.filter((v) => v.status === 'on_site').length}`,
-          `Unregistered people unresolved: ${s.unknownFaces.filter((f) => f.status === 'unresolved').length}`, `Parcels waiting: ${s.parcels.filter((p) => p.status === 'waiting').length}`, `Permits in review: ${s.permits.filter((p) => p.status === 'review').length}`,
-          '', 'Incidents:', ...s.alerts.map((a) => `  ${a.ref}  ${when(a.at)}  ${a.title} — ${a.status}`)].join('\n');
-        return [name.toLowerCase().replace(/\W+/g, '-'), txt];
-      }
+  const [busy, setBusy] = useState<string | null>(null);
+  const pilot = pilotMetrics(state());
+
+  const download = async (name: string, format: ExportFormat = 'CSV') => {
+    const def = REPORTS.find((r) => r.name === name);
+    if (!def) return;
+    setBusy(`${name}:${format}`);
+    try {
+      await exportReport({ title: name, ...def.build(state()) }, format);
+      state().log({ who: state().session.portal?.name ?? 'Farah Hanim', role: state().session.portal?.role ?? 'Building Manager', action: 'Exported', record: `${name} report (${format})` });
+      toast.success(`${name} downloaded`, `${format} file`);
+    } catch {
+      toast.error('Export failed', 'Try again, or pick another format.');
+    } finally {
+      setBusy(null);
     }
   };
-
-  const download = (name: string, format = 'CSV') => {
-    const [file, content] = build(name);
-    const isText = !content.startsWith('"');
-    const ext = isText || format === 'PDF' ? 'txt' : 'csv';
-    downloadFile(`${file}-${todayStamp()}.${ext}`, content, ext === 'csv' ? 'text/csv;charset=utf-8' : 'text/plain;charset=utf-8');
-    state().log({ who: 'Farah Hanim', role: 'Building Manager', action: 'Exported', record: `${name} report` });
-    toast.success(`${name} downloaded`);
-  };
-
-  const library = [
-    { name: 'Daily security summary', desc: 'Alerts, response times, unregistered entries and guard patrols for the last 24 hours', icon: FileText },
-    { name: 'Weekly JMB pack', desc: 'One-page summary for the committee with trends and open actions', icon: FileBarChart },
-    { name: 'Incidents', desc: 'Every alert with owner, timeline and outcome', icon: FileText },
-    { name: 'Visitors', desc: 'Visitor log with check-in method, host unit and plate', icon: FileText },
-    { name: 'Unregistered entries', desc: 'Unknown people detected and how each was resolved', icon: FileText },
-    { name: 'Guard scorecard', desc: 'Per-guard response time, patrol completion and talk-downs', icon: FileBarChart },
-    { name: 'Parcels', desc: 'Parcels logged, collected and aging', icon: FileText },
-    { name: 'Permits', desc: 'Renovation and move permits with deposits and breaches', icon: FileText },
-  ];
 
   return (
     <div className="flex flex-col gap-5">
       <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_400px]">
         <Card className="p-4">
-          <CardHeader title="Alerts this week vs last week" sub="All severities · solid bars this week, dashed line last week" action={<Button size="sm" icon={<Download className="h-4 w-4" />} onClick={() => download('Weekly JMB pack')}>Weekly pack</Button>} />
+          <CardHeader title="Alerts this week vs last week" sub="All severities · solid bars this week, dashed line last week" action={<Button size="sm" icon={<Download className="h-4 w-4" />} loading={busy === 'Weekly JMB pack:PDF'} onClick={() => download('Weekly JMB pack', 'PDF')}>Weekly pack (PDF)</Button>} />
           <div className="mt-3"><BarChart ariaLabel="Alerts per day" values={WEEK} compare={WEEK_PREV} labels={WEEK_L} highlightLast tipLabel={(i) => `${WEEK_L[i]}: ${WEEK[i]} alerts (last week ${WEEK_PREV[i]})`} /></div>
         </Card>
         <Card className="flex flex-col gap-3 p-4">
@@ -88,27 +61,43 @@ export default function Reports() {
           <p className="sub">Pick the data and the period. Exports are logged for PDPA.</p>
           <Button variant="primary" icon={<Plus className="h-4 w-4" />} onClick={() => setCustom(true)}>Build a report</Button>
           <div className="mt-1 grid grid-cols-2 gap-3 text-[13px]">
-            <div className="rounded-xl bg-ice p-3"><p className="text-xs text-muted">Unregistered entries, 30 d</p><p className="text-xl font-extrabold">184</p><p className="text-xs text-teal-dark">−38% since go-live</p></div>
-            <div className="rounded-xl bg-ice p-3"><p className="text-xs text-muted">False alerts</p><p className="text-xl font-extrabold">6.1%</p><p className="text-xs text-teal-dark">−4.2 pts after tuning</p></div>
+            <div className="rounded-xl bg-ice p-3"><p className="text-xs text-muted">Unregistered entries</p><p className="text-xl font-extrabold">{pilot[1].value}</p><p className="text-xs text-muted-dark">{pilot[1].detail}</p></div>
+            <div className="rounded-xl bg-ice p-3"><p className="text-xs text-muted">False alerts</p><p className="text-xl font-extrabold">{pilot[3].value}</p><p className="text-xs text-muted-dark">Target {pilot[3].target}</p></div>
           </div>
         </Card>
       </div>
 
-      <Card className="overflow-hidden">
-        <div className="p-4"><CardHeader title="Report library" sub="Ready-made reports from live data" /></div>
-        <ul className="grid gap-3 px-4 pb-4 md:grid-cols-2">
-          {library.map((r) => (
-            <li key={r.name} className="flex items-start gap-3 rounded-2xl border border-line p-4">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand-ink"><r.icon className="h-5 w-5" /></span>
-              <div className="min-w-0 flex-1"><p className="font-bold">{r.name}</p><p className="text-[12.5px] text-muted">{r.desc}</p></div>
-              <Button size="sm" icon={<Download className="h-4 w-4" />} onClick={() => download(r.name)} aria-label={`Download ${r.name}`}>Download</Button>
+      <Card className="flex flex-col gap-3 p-4">
+        <CardHeader title="Pilot success metrics" sub="The measures agreed for the pilot review, from live data" action={<Button size="sm" icon={<Download className="h-4 w-4" />} loading={busy === 'Pilot success metrics:PDF'} onClick={() => download('Pilot success metrics', 'PDF')}>Pilot report (PDF)</Button>} />
+        <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+          {pilot.map((m) => (
+            <li key={m.metric} className="flex flex-col gap-1 rounded-xl bg-ice p-3">
+              <span className="text-xs font-bold text-muted-dark">{m.metric}</span>
+              <span className="text-xl font-extrabold">{m.value}</span>
+              <span className="text-[11.5px] text-muted">{m.detail}</span>
+              <span className="mt-auto pt-1"><Chip tone={m.ok ? 'teal' : 'amber'}>Target {m.target}{m.ok ? ' · met' : ''}</Chip></span>
             </li>
           ))}
         </ul>
       </Card>
 
       <Card className="overflow-hidden">
-        <div className="p-4"><CardHeader title="Scheduled reports" sub="Sent by email as PDF and CSV" action={<Button size="sm" icon={<CalendarClock className="h-4 w-4" />} onClick={() => setSched(true)}>Add schedule</Button>} /></div>
+        <div className="p-4"><CardHeader title="Report library" sub="Ready-made reports from live data. Every report exports to PDF, Excel and CSV." /></div>
+        <ul className="grid gap-3 px-4 pb-4 md:grid-cols-2">
+          {REPORTS.map((r) => (
+            <li key={r.name} className="flex flex-col gap-3 rounded-2xl border border-line p-4 sm:flex-row sm:items-start">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand-ink">{/scorecard|pack|metrics/i.test(r.name) ? <FileBarChart className="h-5 w-5" /> : <FileText className="h-5 w-5" />}</span>
+              <div className="min-w-0 flex-1"><p className="font-bold">{r.name}</p><p className="text-[12.5px] text-muted">{r.desc}</p><p className="mt-1 text-[11.5px] text-muted-dark">{r.frequency} · {r.audience}</p></div>
+              <div className="flex shrink-0 gap-1.5">
+                {(['PDF', 'Excel', 'CSV'] as const).map((f) => <Button key={f} size="sm" loading={busy === `${r.name}:${f}`} onClick={() => download(r.name, f)} aria-label={`Download ${r.name} as ${f}`}>{f}</Button>)}
+              </div>
+            </li>
+          ))}
+        </ul>
+      </Card>
+
+      <Card className="overflow-hidden">
+        <div className="p-4"><CardHeader title="Scheduled reports" sub="Sent by email as PDF and Excel" action={<Button size="sm" icon={<CalendarClock className="h-4 w-4" />} onClick={() => setSched(true)}>Add schedule</Button>} /></div>
         <ul className="divide-y divide-line-soft">
           {schedules.map((s) => (
             <li key={s.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
@@ -125,11 +114,11 @@ export default function Reports() {
       </Card>
 
       <Modal open={custom} onClose={() => setCustom(false)} title="Build a report"
-        footer={<><Button onClick={() => setCustom(false)}>Cancel</Button><Button variant="primary" icon={<Download className="h-4 w-4" />} onClick={() => { download(kind, fmt); setCustom(false); }}>Generate</Button></>}>
+        footer={<><Button onClick={() => setCustom(false)}>Cancel</Button><Button variant="primary" icon={<Download className="h-4 w-4" />} onClick={() => { download(kind, fmt as ExportFormat); setCustom(false); }}>Generate</Button></>}>
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Data">{(id) => <Select id={id} value={kind} onChange={(e) => setKind(e.target.value)}>{library.map((l) => <option key={l.name}>{l.name}</option>)}</Select>}</Field>
+          <Field label="Data">{(id) => <Select id={id} value={kind} onChange={(e) => setKind(e.target.value)}>{REPORTS.map((l) => <option key={l.name}>{l.name}</option>)}</Select>}</Field>
           <Field label="Period">{(id) => <Select id={id} value={range} onChange={(e) => setRange(e.target.value)}>{['Today', 'Last 7 days', 'Last 30 days', 'This quarter'].map((l) => <option key={l}>{l}</option>)}</Select>}</Field>
-          <Field label="Format">{(id) => <Select id={id} value={fmt} onChange={(e) => setFmt(e.target.value)}>{['CSV', 'PDF'].map((l) => <option key={l}>{l}</option>)}</Select>}</Field>
+          <Field label="Format">{(id) => <Select id={id} value={fmt} onChange={(e) => setFmt(e.target.value)}>{['PDF', 'Excel', 'CSV'].map((l) => <option key={l}>{l}</option>)}</Select>}</Field>
           <div className="flex items-end pb-2"><Checkbox checked={includeClips} onChange={setIncludeClips} label="Include clip links" sub="Links expire after 7 days" /></div>
         </div>
       </Modal>
@@ -137,7 +126,7 @@ export default function Reports() {
       <Modal open={sched} onClose={() => setSched(false)} title="Schedule a report"
         footer={<><Button onClick={() => setSched(false)}>Cancel</Button><Button variant="primary" onClick={() => { if (!sTo.trim()) return toast.error('Add at least one recipient'); setSchedules((xs) => [...xs, { id: `s${Date.now()}`, name: sName, every: sEvery, to: sTo, on: true }]); toast.success('Schedule added'); setSched(false); setSTo(''); }}>Save schedule</Button></>}>
         <div className="flex flex-col gap-3">
-          <Field label="Report">{(id) => <Select id={id} value={sName} onChange={(e) => setSName(e.target.value)}>{library.map((l) => <option key={l.name}>{l.name}</option>)}</Select>}</Field>
+          <Field label="Report">{(id) => <Select id={id} value={sName} onChange={(e) => setSName(e.target.value)}>{REPORTS.map((l) => <option key={l.name}>{l.name}</option>)}</Select>}</Field>
           <Field label="Frequency">{(id) => <Select id={id} value={sEvery} onChange={(e) => setSEvery(e.target.value)}>{['Every day at 07:00', 'Every Monday at 08:00', '1st of the month'].map((l) => <option key={l}>{l}</option>)}</Select>}</Field>
           <Field label="Recipients" hint="Separate emails with commas">{(id) => <Input id={id} value={sTo} onChange={(e) => setSTo(e.target.value)} placeholder="chairman@vistaharmoni.my" />}</Field>
         </div>

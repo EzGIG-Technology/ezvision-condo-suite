@@ -7,8 +7,9 @@ import { Card, Checkbox, Chip, Empty, Field, Input, Modal, Segmented, Select, Te
 import { Button } from '@/components/ui/Button';
 import { CamFeed } from '@/components/vision';
 import { alertStatusText, sevCam, sevLabel, sevTone, statusTone } from '@/lib/labels';
-import { cn, dateLong, downloadFile, hhmm, hhmmss, relative, when } from '@/lib/utils';
+import { cn, dateLong, hhmm, hhmmss, relative, when } from '@/lib/utils';
 import { toast } from '@/store/toast';
+import { exportReport } from '@/lib/export';
 
 type Tab = 'open' | 'mine' | 'closed';
 
@@ -87,15 +88,16 @@ function Detail({ a }: { a: Alert }) {
   const clips = face?.sightings ?? [{ scene: a.scene, camera: a.camera, at: a.at }];
   const shareUrl = `${window.location.origin}/portal/incidents/${a.id}?share=7d`;
 
-  const exportPack = () => {
-    const text = [
-      `EzVision evidence pack · ${a.ref}`, `Vista Harmoni Residences`, `Generated ${new Date().toLocaleString('en-GB')}`, '',
-      `Title: ${a.title}`, `Severity: ${sevLabel[a.severity]}`, `Location: ${a.where}`, `Camera: ${a.camera}`, `Detected: ${dateLong(a.at)} ${hhmmss(a.at)}`,
-      `Status: ${alertStatusText(a)}`, a.policeRef ? `Police report: ${a.policeRef}` : '', '', 'Summary', summary, '', 'Timeline',
-      ...a.timeline.map((t) => `${hhmmss(t.at)}  ${t.text}`), '', 'Clips', ...clips.map((c) => `${c.camera} · ${when(c.at)}`),
-    ].filter((l) => l !== undefined).join('\n');
-    downloadFile(`${a.ref}-evidence-pack.txt`, text, 'text/plain;charset=utf-8');
-    toast.success('Evidence pack downloaded', `${a.ref} · ${clips.length} clips referenced`);
+  const exportPack = async () => {
+    await exportReport({
+      title: `Evidence pack · ${a.ref}`, file: `${a.ref}-evidence-pack`,
+      summary: [['Incident', a.title], ['Severity', sevLabel[a.severity]], ['Location', a.where], ['Camera', a.camera], ['Detected', `${dateLong(a.at)} ${hhmmss(a.at)}`], ['Status', alertStatusText(a)], ...(a.policeRef ? [['Police report', a.policeRef] as [string, string]] : [])],
+      columns: ['Clip', 'Camera', 'Recorded', 'Link (expires in 7 days)'],
+      rows: clips.map((c, i) => [`Clip ${i + 1}`, c.camera, when(c.at), `${window.location.origin}/portal/incidents/${a.id}?clip=${i + 1}`]),
+      sections: [{ heading: 'Summary', lines: [summary] }, { heading: 'Timeline', lines: a.timeline.map((t) => `${hhmmss(t.at)}   ${t.text}`) }],
+    }, 'PDF');
+    useStore.getState().log({ who: useStore.getState().session.portal?.name ?? 'Farah Hanim', role: useStore.getState().session.portal?.role ?? 'Building Manager', action: 'Exported', record: `Evidence pack ${a.ref}` });
+    toast.success('Evidence pack downloaded', `${a.ref} · PDF with ${clips.length} clip${clips.length > 1 ? 's' : ''} and the timeline`);
   };
 
   const doClose = () => {

@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Ban, Car, Plus, RefreshCw, Search, Trash2, User } from 'lucide-react';
+import { Ban, Car, Check, Plus, RefreshCw, Search, Trash2, User } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { Card, CardHeader, Chip, Confirm, Empty, Field, Input, Modal, Plate, Segmented, Select, Textarea } from '@/components/ui';
 import { Button } from '@/components/ui/Button';
 import { FaceCrop } from '@/components/vision';
 import { cn, dayLabel } from '@/lib/utils';
 import { toast } from '@/store/toast';
+import { approvesWatchlist } from '@/lib/roles';
 import type { WatchEntry } from '@/data/types';
 
 const LEVELS: WatchEntry['level'][] = ['Alert all guards', 'Alert only', 'Deny entry', 'Deny and alert'];
@@ -14,7 +15,9 @@ const levelTone = (l: WatchEntry['level']) => (l.startsWith('Deny') ? 'red' : 'a
 export default function Watchlist() {
   const watchlist = useStore((s) => s.watchlist);
   const session = useStore((s) => s.session.portal);
-  const { addWatch, removeWatch, renewWatch } = useStore.getState();
+  const { addWatch, removeWatch, renewWatch, approveWatch } = useStore.getState();
+  const committee = approvesWatchlist(session?.role);
+  const pending = watchlist.filter((w) => w.approval === 'pending');
   const [tab, setTab] = useState<'all' | 'person' | 'vehicle'>('all');
   const [q, setQ] = useState('');
   const [add, setAdd] = useState(false);
@@ -42,7 +45,7 @@ export default function Watchlist() {
       variant: kind === 'person' ? 1 + Math.floor(Math.random() * 8) : undefined, reason, level, addedBy: session?.name ?? 'Farah Hanim',
       until: d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
     });
-    toast.success('Added to watchlist', `Guards will be alerted when ${kind === 'vehicle' ? plate.toUpperCase() : 'this person'} is seen.`);
+    toast.success('Added to watchlist', committee ? `Guards will be alerted when ${kind === 'vehicle' ? plate.toUpperCase() : 'this person'} is seen.` : 'Guards are alerted now. The JMB/MC committee confirms the entry.');
     setAdd(false); setName(''); setPlate(''); setVehicle(''); setReason('');
   };
 
@@ -53,7 +56,7 @@ export default function Watchlist() {
           ['People', watchlist.filter((w) => w.kind === 'person').length, 'Face match on every camera'],
           ['Vehicles', watchlist.filter((w) => w.kind === 'vehicle').length, 'Plate match at both gates'],
           ['Deny entry', watchlist.filter((w) => w.level.startsWith('Deny')).length, 'Barrier stays closed'],
-          ['Hits this month', 6, 'All refused or escorted out'],
+          ['Awaiting approval', pending.length, committee ? 'Approve them below' : 'JMB/MC committee approves'],
         ].map(([l, v, n]) => (
           <Card key={String(l)} className="flex flex-col gap-1.5 p-4"><span className="text-[12.5px] font-bold text-muted-dark">{l}</span><span className="text-[26px] font-extrabold tracking-tight">{v}</span><span className="text-xs text-muted">{n}</span></Card>
         ))}
@@ -79,6 +82,7 @@ export default function Watchlist() {
                   <div className="flex flex-wrap items-center gap-2">
                     {w.plate ? <Plate>{w.plate}</Plate> : <span className="font-bold">{w.name}</span>}
                     <Chip tone={levelTone(w.level)}>{w.level}</Chip>
+                    {w.approval === 'pending' && <Chip tone="amber">Awaiting committee approval</Chip>}
                   </div>
                   <p className="mt-1 text-xs text-muted">{w.plate ? `${w.vehicle ?? ''} · ${w.name}` : w.kind === 'person' ? 'Person' : ''}</p>
                 </div>
@@ -90,6 +94,7 @@ export default function Watchlist() {
                 <div><dt className="text-muted">Last seen</dt><dd className={cn('font-semibold', /today/i.test(w.lastSeen) && 'text-danger-ink')}>{w.lastSeen}</dd></div>
               </dl>
               <div className="mt-auto flex gap-2">
+                {w.approval === 'pending' && committee && <Button size="sm" variant="primary" icon={<Check className="h-3.5 w-3.5" />} onClick={() => { approveWatch(w.id, session?.name ?? 'Committee'); toast.success('Approved', `${w.plate ?? w.name} is now on the watchlist for all guards.`); }}>Approve</Button>}
                 <Button size="sm" icon={<RefreshCw className="h-3.5 w-3.5" />} onClick={() => { renewWatch(w.id); toast.success('Renewed for 6 months', 'Expires 23 Mar 2027.'); }}>Renew</Button>
                 <Button size="sm" variant="ghost" icon={<Trash2 className="h-3.5 w-3.5" />} onClick={() => setDel(w)}>Remove</Button>
                 <span className="ml-auto self-center text-[11px] text-muted">Added {dayLabel(w.addedAt)}</span>

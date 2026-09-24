@@ -3,14 +3,16 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Lock, UserX } from 'lucide-react';
 import { CamFeed, Logo } from '@/components/vision';
 import { Button } from '@/components/ui/Button';
-import { Checkbox, Field, Input, Modal } from '@/components/ui';
+import { Checkbox, Field, Input, Modal, Select } from '@/components/ui';
+import { PORTAL_ROLES, type PortalRole } from '@/lib/roles';
 import { useStore } from '@/store/useStore';
 import { toast } from '@/store/toast';
 import { useDocumentTitle } from '@/lib/hooks';
 
 export default function Login() {
   useDocumentTitle('Sign in');
-  const [email, setEmail] = useState('farah.hanim@vistaharmoni.my');
+  const [role, setRole] = useState<PortalRole>('Building Manager');
+  const [email, setEmail] = useState(PORTAL_ROLES[0].email);
   const [pw, setPw] = useState('');
   const [keep, setKeep] = useState(true);
   const [step, setStep] = useState<'creds' | 'otp'>('creds');
@@ -34,8 +36,9 @@ export default function Login() {
     e.preventDefault();
     if (!/^\d{6}$/.test(otp)) return setErr('Enter the 6-digit code from your authenticator app.');
     setErr('');
-    login(email);
-    toast.success('Welcome back, Farah', 'Signed in to Vista Harmoni Residences');
+    login(email, role);
+    const who = PORTAL_ROLES.find((r) => r.role === role) ?? PORTAL_ROLES[0];
+    toast.success(`Welcome back, ${who.name.split(' ')[0]}`, `Signed in to Vista Harmoni Residences as ${role}`);
     navigate(loc.state?.from ?? '/portal/dashboard', { replace: true });
   };
 
@@ -65,6 +68,11 @@ export default function Login() {
               <h2 className="text-[28px] font-extrabold tracking-tight">Sign in to your site</h2>
               <p className="text-[14.5px] leading-relaxed text-muted">For building managers, JMB/MC committee members and security supervisors.</p>
             </div>
+            <Field label="Role" hint={PORTAL_ROLES.find((r) => r.role === role)?.access}>{(id) => (
+              <Select id={id} value={role} onChange={(e) => { const r = PORTAL_ROLES.find((x) => x.role === e.target.value) ?? PORTAL_ROLES[0]; setRole(r.role); setEmail(r.email); }} className="h-12">
+                {PORTAL_ROLES.map((r) => <option key={r.role} value={r.role}>{r.role} · {r.name}</option>)}
+              </Select>
+            )}</Field>
             <Field label="Work email">{(id) => <Input id={id} type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} className="h-12" />}</Field>
             <Field label="Password">{(id) => <Input id={id} type="password" autoComplete="current-password" value={pw} onChange={(e) => setPw(e.target.value)} placeholder="Any password works in this demo" className="h-12" />}</Field>
             <div className="flex items-center justify-between gap-3">

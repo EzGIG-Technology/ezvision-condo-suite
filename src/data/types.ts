@@ -136,6 +136,9 @@ export interface WatchEntry {
   addedAt: string;
   until: string;
   lastSeen: string;
+  /** Entries added by staff wait for JMB/MC approval. Missing on older records, which count as approved. */
+  approval?: 'pending' | 'approved';
+  approvedBy?: string;
 }
 
 export type PermitStatus = 'review' | 'active' | 'awaiting_deposit' | 'ending' | 'breach' | 'rejected' | 'completed' | 'changes_requested';
@@ -273,9 +276,11 @@ export interface Announcement {
   sentBy: string;
 }
 
+export type RuleGroup = 'Access' | 'Perimeter' | 'Carpark' | 'Safety' | 'Fire' | 'Nuisance' | 'Contractors' | 'Operations' | 'Audio';
+
 export interface Rule {
   id: string;
-  group: 'Access' | 'Perimeter' | 'Carpark' | 'Safety' | 'Nuisance' | 'Operations';
+  group: RuleGroup;
   name: string;
   cameras: number;
   schedule: string;
@@ -285,6 +290,14 @@ export interface Rule {
   firedWeek: number;
   falseWeek: number;
   actions: { talkDown: boolean; alertGuard: boolean; dispatch: boolean; escalate: boolean };
+  /** Where the rule runs, for example 'Main gate ANPR lanes'. */
+  zone?: string;
+  /** Package that includes this detection. */
+  tier?: 'Core' | 'Secure' | 'Premium';
+  /** Compound rule: alert only when every condition is also true. */
+  conditions?: string[];
+  /** Created by the site, not from the standard catalogue. */
+  custom?: boolean;
 }
 
 export interface ResidentNotice {

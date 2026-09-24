@@ -4,9 +4,10 @@ import { useStore } from '@/store/useStore';
 import { Card, Chip, Modal, Select, Switch } from '@/components/ui';
 import { Button } from '@/components/ui/Button';
 import { SITE } from '@/data/seed';
-import { cn, downloadFile, rm } from '@/lib/utils';
+import { cn, rm } from '@/lib/utils';
 import { useDocumentTitle } from '@/lib/hooks';
 import { toast } from '@/store/toast';
+import { exportReport } from '@/lib/export';
 import type { Bill } from '@/data/types';
 
 const METHODS = [
@@ -41,9 +42,13 @@ export default function ResidentBilling() {
     }, 1000);
   };
 
-  const receipt = (b: Bill) => {
-    const lines = [`OFFICIAL RECEIPT`, SITE.name, `Joint Management Body`, '', `Unit: ${b.unit}`, `Received from: ${resident.name}`, `For: ${b.label}`, ...(b.lines.length ? b.lines.map((l) => `  ${l.label.padEnd(38)} ${rm(l.amount)}`) : []), '', `Total: ${rm(b.amount)}`, `Paid: ${b.paidAt ?? ''} via ${b.method ?? ''}`, `Receipt no: OR-${b.id.toUpperCase()}`];
-    downloadFile(`receipt-${b.id}.txt`, lines.join('\n'), 'text/plain;charset=utf-8');
+  const receipt = async (b: Bill) => {
+    await exportReport({
+      title: 'Official receipt', file: `receipt-${b.id}`,
+      summary: [['Receipt no', `OR-${b.id.toUpperCase()}`], ['Issued by', `${SITE.name} Joint Management Body`], ['Unit', b.unit], ['Received from', resident.name], ['For', b.label], ['Paid', `${b.paidAt ?? ''} via ${b.method ?? ''}`]],
+      columns: ['Item', 'Amount'],
+      rows: [...(b.lines.length ? b.lines.map((l) => [l.label, rm(l.amount)]) : [[b.label, rm(b.amount)]]), ['Total', rm(b.amount)]],
+    }, 'PDF');
     toast.success('Receipt downloaded');
   };
 

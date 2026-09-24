@@ -5,6 +5,7 @@ import type {
   Alert, AlertStatus, Announcement, Approval, AuditEntry, Booking, Facility, LiftBooking, Parcel, Permit, Resolution, ResidentNotice, Rule, SiteLimits, VoteChoice, Session, Ticket, UnitRecord, Visit, WatchEntry,
 } from '@/data/types';
 import { code4, hhmm, uid } from '@/lib/utils';
+import { approvesWatchlist, PORTAL_ROLES } from '@/lib/roles';
 
 const STORAGE_KEY = 'ezvision-condo-suite:v1';
 
@@ -27,7 +28,7 @@ const batchedStorage: StateStorage = {
 type State = Seed & {
   session: Session;
   // session
-  loginPortal: (email: string) => void;
+  loginPortal: (email: string, role?: string) => void;
   logoutPortal: () => void;
   loginGuard: (guardId: string) => void;
   logoutGuard: () => void;
@@ -51,6 +52,7 @@ type State = Seed & {
   addWatch: (w: Omit<WatchEntry, 'id' | 'addedAt' | 'lastSeen'>) => void;
   removeWatch: (id: string) => void;
   renewWatch: (id: string) => void;
+  approveWatch: (id: string, by: string) => void;
   // visits
   createVisit: (v: Omit<Visit, 'id'>) => string;
   cancelVisit: (id: string) => void;
@@ -98,6 +100,7 @@ type State = Seed & {
   // rules
   toggleRule: (id: string) => void;
   updateRule: (id: string, patch: Partial<Rule>) => void;
+  createRule: (r: Omit<Rule, 'id' | 'firedWeek' | 'falseWeek'>) => string;
   // resident
   markNoticesRead: () => void;
   addNotice: (n: Omit<ResidentNotice, 'id' | 'at' | 'read'>) => void;
@@ -135,7 +138,10 @@ export const useStore = create<State>()(
       ...makeSeed(),
       session: {},
 
-      loginPortal: (email) => set({ session: { ...get().session, portal: { name: 'Farah Hanim', role: 'Building Manager', email } } }),
+      loginPortal: (email, role) => {
+        const r = PORTAL_ROLES.find((x) => x.role === role) ?? PORTAL_ROLES[0];
+        set({ session: { ...get().session, portal: { name: r.name, role: r.role, email } } });
+      },
       logoutPortal: () => set({ session: { ...get().session, portal: undefined } }),
       loginGuard: (guardId) => set({ session: { ...get().session, guardId } }),
       logoutGuard: () => set({ session: { ...get().session, guardId: undefined } }),
@@ -191,10 +197,17 @@ export const useStore = create<State>()(
       },
 
       addWatch: (w) => {
-        set({ watchlist: [{ ...w, id: uid('w'), addedAt: now(), lastSeen: 'Not yet' }, ...get().watchlist] });
-        get().log({ who: w.addedBy, role: 'Building Manager', action: 'Added', record: `Watchlist entry ${w.plate ?? w.name}` });
+        const role = get().session.portal?.role ?? 'Building Manager';
+        const approval = approvesWatchlist(role) ? 'approved' : 'pending';
+        set({ watchlist: [{ ...w, id: uid('w'), addedAt: now(), lastSeen: 'Not yet', approval, approvedBy: approval === 'approved' ? w.addedBy : undefined }, ...get().watchlist] });
+        get().log({ who: w.addedBy, role, action: 'Added', record: `Watchlist entry ${w.plate ?? w.name}${approval === 'pending' ? ' (awaiting committee approval)' : ''}` });
       },
       removeWatch: (id) => set({ watchlist: get().watchlist.filter((w) => w.id !== id) }),
+      approveWatch: (id, by) => {
+        const w = get().watchlist.find((x) => x.id === id);
+        set({ watchlist: get().watchlist.map((x) => (x.id === id ? { ...x, approval: 'approved', approvedBy: by } : x)) });
+        if (w) get().log({ who: by, role: 'JMB/MC committee', action: 'Approved', record: `Watchlist entry ${w.plate ?? w.name}` });
+      },
       renewWatch: (id) => set({ watchlist: get().watchlist.map((w) => (w.id === id ? { ...w, until: '23 Mar 2027' } : w)) }),
 
       createVisit: (v) => {
@@ -277,7 +290,7 @@ export const useStore = create<State>()(
       setPermitStatus: (id, status) => {
         const p = get().permits.find((x) => x.id === id);
         set({ permits: get().permits.map((x) => (x.id === id ? { ...x, status } : x)) });
-        get().log({ who: 'Farah Hanim', role: 'Building Manager', action: status === 'active' ? 'Approved' : 'Changed', record: `Permit ${id} → ${status.replace('_', ' ')}` });
+        get().log({ who: get().session.portal?.name ?? 'Farah Hanim', role: 'Building Manager', action: status === 'active' ? 'Approved' : 'Changed', record: `Permit ${id} → ${status.replace('_', ' ')}` });
         if (p && p.unit === get().resident.unit) {
           const label = status === 'active' ? 'approved' : status === 'changes_requested' ? 'needs changes' : status === 'rejected' ? 'was not approved' : status.replace('_', ' ');
           get().addNotice({ unit: p.unit, title: `Permit ${id} ${label}`, body: `${p.scope} · ${p.start} to ${p.end}`, kind: 'permit', link: '/app/renovation' });
@@ -406,6 +419,11 @@ export const useStore = create<State>()(
 
       toggleRule: (id) => set({ rules: get().rules.map((r) => (r.id === id ? { ...r, enabled: !r.enabled } : r)) }),
       updateRule: (id, patch) => set({ rules: get().rules.map((r) => (r.id === id ? { ...r, ...patch } : r)) }),
+      createRule: (r) => {
+        const id = uid('r');
+        set({ rules: [...get().rules, { ...r, id, firedWeek: 0, falseWeek: 0 }] });
+        return id;
+      },
 
       markNoticesRead: () => set({ notices: get().notices.map((n) => ({ ...n, read: true })) }),
       addNotice: (n) => set({ notices: [{ ...n, id: uid('n'), at: now(), read: false }, ...get().notices] }),
@@ -434,7 +452,12 @@ export const useStore = create<State>()(
       setRetention: (id, keep) => set({ retention: get().retention.map((r) => (r.id === id ? { ...r, keep } : r)) }),
       advanceRequest: (id) =>
         set({ dataRequests: get().dataRequests.map((r) => (r.id === id ? { ...r, state: r.state === 'New' ? 'In progress' : 'Done' } : r)) }),
-      log: (e) => set({ audit: [{ ...e, id: uid('au'), at: now() }, ...get().audit].slice(0, 200) }),
+      log: (e) => {
+        // Portal pages log as 'Building Manager'; record the signed-in person's real role instead.
+        const me = get().session.portal;
+        const role = me && e.who === me.name ? me.role : e.role;
+        set({ audit: [{ ...e, role, id: uid('au'), at: now() }, ...get().audit].slice(0, 200) });
+      },
 
       resetDemo: () => {
         const session = get().session;
@@ -443,7 +466,18 @@ export const useStore = create<State>()(
     }),
     {
       name: STORAGE_KEY,
-      version: 1,
+      version: 2,
+      // Saved demo data from an earlier version keeps its records, and gains the records and fields
+      // added since (for example the full detection rule catalogue).
+      migrate: (persisted, version) => {
+        const state = persisted as Partial<State>;
+        if (version < 2 && Array.isArray(state.rules)) {
+          const seed = makeSeed().rules;
+          const saved = new Map(state.rules.map((r) => [r.id, r]));
+          state.rules = [...seed.map((r) => { const old = saved.get(r.id); return old ? { ...r, ...old, zone: old.zone ?? r.zone, tier: old.tier ?? r.tier, conditions: old.conditions ?? r.conditions } : r; }), ...state.rules.filter((r) => !seed.some((x) => x.id === r.id))];
+        }
+        return state as State;
+      },
       storage: createJSONStorage(() => batchedStorage),
     },
   ),

@@ -456,6 +456,37 @@ await step('Offline mode: guard tablet loses the connection, keeps logging a par
   await expect(guard.getByText(/synced to the portal/)).toBeVisible(T);
 });
 
+await step('Detection rules: full catalogue incl. audio; manager creates a compound rule that alerts only after midnight', async () => {
+  await go(portal, '/portal/rules');
+  await expect(portal.getByText(/of 48$/)).toBeVisible(T);
+  await portal.getByRole('tab', { name: 'Audio' }).click();
+  await expect(portal.getByText('Glass breaking or loud bang')).toBeVisible(T);
+  await portal.getByRole('button', { name: 'New rule' }).click();
+  const d = portal.getByRole('dialog');
+  await d.getByLabel('Rule name').fill('Audit: person on the roof at night');
+  await d.getByLabel('Category').selectOption('Perimeter');
+  await d.getByText('After midnight (00:00 to 06:00)').click();
+  await d.getByText('Person is not a resident').click();
+  await d.getByRole('button', { name: 'Create rule' }).click();
+  await expect(portal.getByText('Rule created')).toBeVisible(T);
+  await portal.getByRole('tab', { name: 'Perimeter' }).click();
+  const row = portal.locator('li', { hasText: 'Audit: person on the roof at night' });
+  await expect(row.getByText('Only when after midnight (00:00 to 06:00) and person is not a resident')).toBeVisible(T);
+  await expect(portal.getByText(/of 49$/)).toBeVisible(T);
+});
+
+await step('Reports: the same report downloads as a real PDF, Excel and CSV file; pilot metrics are shown', async () => {
+  await go(portal, '/portal/reports');
+  await expect(portal.getByText('Pilot success metrics').first()).toBeVisible(T);
+  const magic = { PDF: ['.pdf', '%PDF'], Excel: ['.xlsx', 'PK'], CSV: ['.csv', '"Cameras"'] };
+  for (const [fmt, [ext, head]] of Object.entries(magic)) {
+    const [dl] = await Promise.all([portal.waitForEvent('download', T), portal.getByRole('button', { name: `Download Camera health and uptime as ${fmt}` }).click()]);
+    if (!dl.suggestedFilename().endsWith(ext)) throw new Error(`${fmt}: got ${dl.suggestedFilename()}`);
+    const buf = fs.readFileSync(await dl.path());
+    if (!buf.subarray(0, 12).toString('latin1').startsWith(head)) throw new Error(`${fmt}: file does not start with ${head}`);
+  }
+});
+
 await step('Guard shift handover: checklist, sign off, logged out', async () => {
   await go(guard, '/guard/report');
   await guard.getByRole('tab', { name: 'Shift handover' }).click();
@@ -463,6 +494,39 @@ await step('Guard shift handover: checklist, sign off, logged out', async () => 
   await guard.getByRole('button', { name: 'Sign off shift' }).click();
   await guard.getByRole('dialog').getByRole('button', { name: 'Sign off' }).click();
   await guard.waitForURL('**/guard/login', T);
+});
+
+await step('Roles: JMB/MC committee sees only its pages and approves a watchlist entry; security supervisor sees guards but not residents', async () => {
+  const signIn = async (role) => {
+    await go(portal, '/portal/dashboard');
+    if (VP === 'mobile') await portal.getByRole('button', { name: 'Open menu' }).click();
+    await portal.getByRole('button', { name: 'Sign out' }).last().click();
+    await portal.waitForURL('**/login', T);
+    await portal.getByLabel('Role').selectOption(role);
+    await portal.getByLabel('Password').fill('secret');
+    await portal.getByRole('button', { name: 'Continue' }).click();
+    await portal.getByLabel('Verification code').fill('123456');
+    await portal.getByRole('button', { name: 'Verify and sign in' }).click();
+    await portal.waitForURL('**/portal/dashboard', T);
+  };
+  const nav = portal.getByRole('navigation', { name: 'Main' }).last();
+  const openNav = async () => { if (VP === 'mobile') await portal.getByRole('button', { name: 'Open menu' }).click(); };
+  await signIn('JMB/MC committee');
+  await openNav();
+  await expect(nav.getByRole('link', { name: /^Reports/ })).toBeVisible(T);
+  await expect(nav.getByRole('link', { name: /^Live View/ })).toHaveCount(0);
+  await go(portal, '/portal/live');
+  await expect(portal.getByText('Live View is not part of your role')).toBeVisible(T);
+  await go(portal, '/portal/watchlist');
+  const pending = portal.locator('li', { hasText: 'Awaiting committee approval' }).first();
+  await expect(pending).toBeVisible(T);
+  await pending.getByRole('button', { name: 'Approve' }).click();
+  await expect(portal.getByText('Approved', { exact: true })).toBeVisible(T);
+  await signIn('Security supervisor');
+  await openNav();
+  await expect(nav.getByRole('link', { name: /^Guard Performance/ })).toBeVisible(T);
+  await expect(nav.getByRole('link', { name: /^Residents/ })).toHaveCount(0);
+  await signIn('Building Manager');
 });
 
 await step('Sign out: resident and portal', async () => {
