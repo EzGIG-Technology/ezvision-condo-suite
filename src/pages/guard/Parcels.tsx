@@ -60,7 +60,7 @@ export default function GuardParcels() {
   };
 
   const handOver = (p: Parcel) => {
-    collectParcel(p.id, p.recipient);
+    collectParcel(p.id, p.recipient, 'Pickup code + photo');
     toast.success('Handed over', `${p.courier} parcel to ${p.recipient} (${p.unit}).`);
     setMatch(null); setCode('');
   };
@@ -121,6 +121,7 @@ export default function GuardParcels() {
               <div className="flex flex-col gap-3 rounded-xl bg-teal/10 p-4">
                 <p className="font-bold">{matched.courier} · {matched.size}</p>
                 <p className="text-sm text-[#C9D3EE]">{matched.unit} · {matched.recipient} · {matched.locker ? 'smart' : 'shelf'} <b className="font-mono text-white">{matched.shelf}</b></p>
+                <p className="text-xs text-[#A9C4FF]">The tablet photographs the hand-over as proof of collection.</p>
                 <Button size="xl" variant="teal" icon={<PackageCheck className="h-5 w-5" />} onClick={() => handOver(matched)}>Hand over</Button>
               </div>
             )}

@@ -93,6 +93,8 @@ export interface Parcel {
   collectedBy?: string;
   /** Smart locker number when the parcel is in a locker instead of on a shelf. */
   locker?: string;
+  /** How the hand-over was confirmed, e.g. 'Pickup code + photo'. */
+  proof?: string;
 }
 
 export interface Sighting {
@@ -204,6 +206,18 @@ export interface IntercomCall {
   outcome?: 'door_opened' | 'declined' | 'missed' | 'talked';
 }
 
+/** Single-use delivery code a resident sends to a courier. Each use is stamped with a photo. */
+export interface CourierPass {
+  code: string;
+  unit: string;
+  courier: string;
+  createdAt: string;
+  usedAt?: string;
+  usedBy?: string;
+  /** Face shown in the photo stamp taken by the guard. */
+  photoVariant?: number;
+}
+
 export interface GuardMessage {
   id: string;
   unit: string;
@@ -286,6 +300,8 @@ export interface Announcement {
   channels: string[];
   sentAt: string;
   sentBy: string;
+  /** Emergency broadcast: always delivered by push and SMS, even to residents who turned notices off. */
+  emergency?: boolean;
 }
 
 export type RuleGroup = 'Access' | 'Perimeter' | 'Carpark' | 'Safety' | 'Fire' | 'Nuisance' | 'Contractors' | 'Operations' | 'Audio';

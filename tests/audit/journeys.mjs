@@ -545,6 +545,45 @@ await step('Video intercom: visitor calls A-15-07 from the lobby panel; resident
   await expect(guard.getByText('A-15-07 declined the call')).toBeVisible(T);
 });
 
+await step('Courier pass: resident creates a single-use code; guard checks it once with a photo stamp; second use refused', async () => {
+  await go(res, '/app/parcels');
+  await res.getByRole('button', { name: 'Create', exact: true }).click();
+  await res.getByRole('dialog').getByRole('button', { name: 'Create pass' }).click();
+  const code = (await res.getByRole('dialog').locator('p.font-mono').innerText()).trim();
+  await res.getByRole('dialog').getByRole('button', { name: 'Done' }).click();
+  await go(guard, '/guard/riders');
+  await guard.getByLabel('Courier pass code').fill(code);
+  await guard.getByRole('button', { name: 'Check' }).click();
+  await expect(guard.getByText('Valid · single use')).toBeVisible(T);
+  await guard.getByLabel('Courier pass code').fill(code);
+  await guard.getByRole('button', { name: 'Check' }).click();
+  await expect(guard.getByText('Pass not accepted')).toBeVisible(T);
+  await go(res, '/app/parcels');
+  await expect(res.getByText('Courier passes used')).toBeVisible(T);
+  await go(visitor, `/d/${code}`);
+  await expect(visitor.getByText(/Used at \d\d:\d\d/)).toBeVisible(T);
+});
+
+await step('Visitor self-entry: guest types the pass PIN at the Tower A lobby panel and the door opens', async () => {
+  if (!pin) throw new Error('no pass PIN from the invite journey');
+  await go(visitor, '/panel');
+  await visitor.getByRole('tab', { name: 'I have a visitor pass' }).click();
+  for (const d of pin) await visitor.getByRole('button', { name: d, exact: true }).click();
+  await visitor.getByRole('button', { name: 'Open door with pass' }).click();
+  await expect(visitor.getByText('Welcome, Audit')).toBeVisible(T);
+});
+
+await step('Emergency broadcast: manager sends an emergency notice; residents get it as a security notice', async () => {
+  await go(portal, '/portal/community?compose=1');
+  await portal.getByLabel('Title').fill('Audit: water cut Tower A');
+  await portal.getByLabel('Message').fill('Water supply off 10am to 2pm for pump repair.');
+  await portal.getByText('Emergency broadcast').click();
+  await portal.getByRole('button', { name: /Send to/ }).click();
+  await expect(portal.getByText('Emergency broadcast sent')).toBeVisible(T);
+  await go(res, '/app/activity');
+  await expect(res.getByText('Emergency: Audit: water cut Tower A')).toBeVisible(T);
+});
+
 await step('Guard shift handover: checklist, sign off, logged out', async () => {
   await go(guard, '/guard/report');
   await guard.getByRole('tab', { name: 'Shift handover' }).click();

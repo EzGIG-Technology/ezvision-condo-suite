@@ -11,10 +11,10 @@ const viewport = VP === 'mobile' ? { width: 390, height: 844 } : { width: 1440, 
 const EXE = process.env.CHROMIUM_PATH || undefined;
 
 const SURFACES = {
-  public: { login: null, routes: ['/', '/login', '/guard/login', '/app/login', '/v/v-10', '/v/v-10/selfie', '/v/v-1', '/d/A15074K2P', '/d/bad', '/v/nope', '/nonexistent'] },
-  portal: { login: 'portal', routes: ['/portal/dashboard', '/portal/live', '/portal/incidents', '/portal/incidents/al-2', '/portal/unregistered', '/portal/search', '/portal/search?q=red%20myvi%20yesterday', '/portal/visitors', '/portal/vehicles', '/portal/permits', '/portal/residents', '/portal/residents/A-15-07', '/portal/watchlist', '/portal/guards', '/portal/community', '/portal/community?tab=bookings', '/portal/community?tab=tickets', '/portal/community?tab=fees', '/portal/community?tab=parcels', '/portal/community?tab=voting', '/portal/reports', '/portal/rules', '/portal/privacy'] },
-  guard: { login: 'guard', routes: ['/guard', '/guard/alerts', '/guard/alerts/al-2', '/guard/walk-in', '/guard/verify', '/guard/parcels', '/guard/patrol', '/guard/report'] },
-  resident: { login: 'resident', routes: ['/app', '/app/invite', '/app/pass/v-14', '/app/visitors', '/app/parcels', '/app/book', '/app/activity', '/app/unit', '/app/face', '/app/renovation', '/app/billing', '/app/approval/ap-1', '/app/sos'] },
+  public: { login: null, routes: ['/', '/login', '/guard/login', '/app/login', '/v/v-10', '/v/v-10/selfie', '/v/v-1', '/d/A15074K2P', '/d/bad', '/v/nope', '/nonexistent', '/panel'] },
+  portal: { login: 'portal', routes: ['/portal/dashboard', '/portal/live', '/portal/incidents', '/portal/incidents/al-2', '/portal/unregistered', '/portal/search', '/portal/search?q=red%20myvi%20yesterday', '/portal/visitors', '/portal/vehicles', '/portal/permits', '/portal/residents', '/portal/residents/A-15-07', '/portal/watchlist', '/portal/guards', '/portal/community', '/portal/community?tab=bookings', '/portal/community?tab=tickets', '/portal/community?tab=fees', '/portal/community?tab=parcels', '/portal/community?tab=voting', '/portal/facilities', '/portal/reports', '/portal/rules', '/portal/privacy', '/portal/integrations', '/portal/settings'] },
+  guard: { login: 'guard', routes: ['/guard', '/guard/alerts', '/guard/alerts/al-2', '/guard/walk-in', '/guard/verify', '/guard/parcels', '/guard/patrol', '/guard/report', '/guard/messages', '/guard/riders'] },
+  resident: { login: 'resident', routes: ['/app', '/app/invite', '/app/pass/v-14', '/app/visitors', '/app/parcels', '/app/book', '/app/activity', '/app/unit', '/app/face', '/app/renovation', '/app/billing', '/app/approval/ap-1', '/app/sos', '/app/guardhouse', '/app/report', '/app/move', '/app/vote'] },
 };
 
 const results = { viewport: VP, routes: [], dead: [], errors: [], overflow: [], tested: 0, ok: 0, external: [], skipped: 0 };

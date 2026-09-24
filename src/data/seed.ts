@@ -1,6 +1,6 @@
 import { ago } from '@/lib/utils';
 import type {
-  Alert, Approval, Announcement, AuditEntry, Bill, Booking, Checkpoint, Facility, DataRequest, Guard, GuardMessage, IntercomCall, LiftBooking, Parcel, Permit, Resolution, SiteLimits,
+  Alert, Approval, Announcement, AuditEntry, Bill, Booking, Checkpoint, CourierPass, Facility, DataRequest, Guard, GuardMessage, IntercomCall, LiftBooking, Parcel, Permit, Resolution, SiteLimits,
   ResidentNotice, Retention, Rule, Ticket, UnitRecord, UnknownFace, UnknownPlate, Visit, WatchEntry,
 } from './types';
 
@@ -345,6 +345,10 @@ export function makeSeed() {
     { id: 'rs-1', title: 'Repaint Tower C facade', detail: 'RM 240,000 from the sinking fund', meeting: 'AGM 2025', closes: dayAt(-480, 23, 59), status: 'not_passed', votes: { yes: 233, no: 281, abstain: 16 }, voted: {} },
   ];
 
+  const courierPasses: CourierPass[] = [
+    { code: 'A15074K2P', unit: 'A-15-07', courier: 'Lalamove', createdAt: ago(40) },
+  ];
+
   const messages: GuardMessage[] = [
     { id: 'gm-1', unit: 'A-15-07', from: 'resident', text: 'Hi, my aircond technician will come around 3pm today. Please let him up.', at: ago(26 * 60), read: true },
     { id: 'gm-2', unit: 'A-15-07', from: 'guard', text: 'Noted. We will call you when he arrives.', at: ago(26 * 60 - 3), read: true },
@@ -402,7 +406,7 @@ export function makeSeed() {
 
   return {
     alerts, visits, approvals, parcels, unknownFaces, unknownPlates, watchlist, permits, liftBookings, facilities, bookings, announcements, rules, notices, bills,
-    checkpoints, guards, tickets, messages, limits, call: null as IntercomCall | null, resolutions, dataRequests, audit, retention, units,
+    checkpoints, guards, tickets, messages, courierPasses, limits, call: null as IntercomCall | null, resolutions, dataRequests, audit, retention, units,
     patrolStartedAt: ago(21),
     nightMode: true,
     feeRestriction: true,

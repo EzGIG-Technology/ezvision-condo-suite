@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Bike, CheckCircle2, Clock, LogOut } from 'lucide-react';
 import { useCurrentGuard, useStore } from '@/store/useStore';
 import { Chip, Empty, Input, Select } from '@/components/ui';
+import { FaceCrop } from '@/components/vision';
 import { Button } from '@/components/ui/Button';
 import { cn, hhmm, relative } from '@/lib/utils';
 import { useDocumentTitle, useNow } from '@/lib/hooks';
@@ -24,6 +25,19 @@ export default function GuardRiders() {
   const [plate, setPlate] = useState('');
   const [unit, setUnit] = useState('');
   const [zone, setZone] = useState<'dropoff' | 'unit'>('dropoff');
+  const [passCode, setPassCode] = useState('');
+  const [stamp, setStamp] = useState<{ code: string; unit: string } | null>(null);
+  const courierPasses = useStore((s) => s.courierPasses);
+  const stamped = stamp ? courierPasses.find((p) => p.code === stamp.code) : undefined;
+
+  const redeem = (e: FormEvent) => {
+    e.preventDefault();
+    const r = useStore.getState().redeemCourierPass(passCode, guard.name);
+    if (!r.ok) { setStamp(null); return toast.error('Pass not accepted', r.reason); }
+    setStamp({ code: passCode.trim().toUpperCase(), unit: r.unit ?? '' });
+    toast.success(`Courier let up to ${r.unit}`, 'Photo stamped and sent to the resident.');
+    setPassCode('');
+  };
 
   const onSite = visits.filter((v) => v.type === 'rider' && v.status === 'on_site');
   const asking = approvals.filter((a) => / delivery to your door$/.test(a.purpose) && (a.status === 'waiting' || (a.status === 'approved' && visits.find((v) => v.id === a.visitId)?.status === 'expected') || (a.status === 'declined' && +now - +new Date(a.respondedAt ?? a.createdAt) < 30 * 60_000)));
@@ -67,6 +81,19 @@ export default function GuardRiders() {
         </form>
 
         <aside className="flex flex-col gap-4">
+          <section className="flex flex-col gap-3 rounded-2xl border border-night-line bg-night-panel p-4" aria-label="Courier pass">
+            <h2 className="text-base font-extrabold">Courier pass from a resident</h2>
+            <form onSubmit={redeem} className="flex gap-2">
+              <Input dark aria-label="Courier pass code" value={passCode} onChange={(e) => setPassCode(e.target.value)} placeholder="Scan QR or type code" className="font-mono uppercase" />
+              <Button type="submit" variant="nightPrimary" disabled={passCode.trim().length < 9} className="shrink-0">Check</Button>
+            </form>
+            {stamped && (
+              <div className="flex items-center gap-3 rounded-xl bg-teal/15 p-3">
+                <FaceCrop variant={stamped.photoVariant} className="h-14 w-14 shrink-0" rounded="rounded-xl" label="Photo stamp of the courier" />
+                <p className="text-[13px]"><b>Valid · single use</b><br />{stamped.courier} to {stamped.unit} · photo taken {hhmm(stamped.usedAt)}</p>
+              </div>
+            )}
+          </section>
           {asking.length > 0 && (
             <section className="flex flex-col gap-2 rounded-2xl border border-night-line bg-night-panel p-4" aria-label="Waiting for residents">
               <h2 className="text-base font-extrabold">Asked residents</h2>

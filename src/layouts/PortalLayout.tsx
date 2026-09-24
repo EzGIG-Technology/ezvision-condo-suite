@@ -17,6 +17,9 @@ import { canOpen, PORTAL_ROLES, roleOf } from '@/lib/roles';
 
 type NavItem = { to: string; label: string; icon: typeof LayoutGrid; badge?: () => number; tone?: 'red' | 'blue' };
 
+/** Portal pages with personal data (faces, plates, names, IC details). Opening them is logged. */
+const PERSONAL_DATA_PAGES = ['residents', 'visitors', 'unregistered', 'watchlist', 'incidents', 'search', 'live'];
+
 export const PORTAL_TITLES: Record<string, [string, string]> = {
   dashboard: ['Command Center', 'Overview'],
   live: ['Live View', 'Overview'],
@@ -262,6 +265,14 @@ export default function PortalLayout() {
     document.title = `${title} · EzVision Condo Suite`;
     setMenu(false);
   }, [title, loc.pathname]);
+
+  // Views of pages that show personal data go in the PDPA audit log.
+  useEffect(() => {
+    const me = useStore.getState().session.portal;
+    if (!me || !PERSONAL_DATA_PAGES.includes(key) || !canOpen(me.role, key)) return;
+    const detail = loc.pathname.split('/')[3];
+    useStore.getState().log({ who: me.name, role: me.role, action: 'Viewed', record: `${title}${detail ? ` · ${decodeURIComponent(detail)}` : ''}` });
+  }, [key, title, loc.pathname]);
 
   if (!session) return <Navigate to="/login" replace state={{ from: loc.pathname }} />;
 

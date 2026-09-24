@@ -45,14 +45,16 @@ function Announcements() {
   const [body, setBody] = useState('');
   const [audience, setAudience] = useState('All towers');
   const [channels, setChannels] = useState<string[]>(['App push', 'WhatsApp']);
+  const [emergency, setEmergency] = useState(false);
   useEffect(() => { if (params.get('compose') === '1') setOpen(true); }, [params]);
   const close = () => { setOpen(false); if (params.get('compose')) setParams((p) => { p.delete('compose'); return p; }, { replace: true }); };
   const send = () => {
     if (!title.trim() || !body.trim()) return toast.error('Add a title and message');
     if (!channels.length) return toast.error('Pick at least one channel');
-    useStore.getState().sendAnnouncement({ title, body, audience, channels, sentBy: session?.name ?? 'Farah Hanim' });
-    toast.success('Announcement sent', `${audience} · ${channels.join(', ')}`);
-    setTitle(''); setBody(''); close();
+    const ch = emergency ? [...new Set([...channels, 'App push', 'SMS'])] : channels;
+    useStore.getState().sendAnnouncement({ title, body, audience, channels: ch, sentBy: session?.name ?? 'Farah Hanim', emergency });
+    toast.success(emergency ? 'Emergency broadcast sent' : 'Announcement sent', `${audience} · ${ch.join(', ')}`);
+    setTitle(''); setBody(''); setEmergency(false); close();
   };
   const toggleCh = (c: string) => setChannels((cs) => (cs.includes(c) ? cs.filter((x) => x !== c) : [...cs, c]));
   const reach = audience === 'All towers' ? 1284 : audience.startsWith('Tower') ? 428 : 212;
@@ -63,7 +65,7 @@ function Announcements() {
       <ul className="divide-y divide-line-soft">
         {announcements.map((a) => (
           <li key={a.id} className="flex flex-col gap-1.5 px-4 py-4">
-            <div className="flex flex-wrap items-center gap-2"><p className="font-bold">{a.title}</p><Chip tone="blue">{a.audience}</Chip>{a.channels.map((c) => <Chip key={c}>{c}</Chip>)}</div>
+            <div className="flex flex-wrap items-center gap-2"><p className="font-bold">{a.title}</p>{a.emergency && <Chip tone="red">Emergency</Chip>}<Chip tone="blue">{a.audience}</Chip>{a.channels.map((c) => <Chip key={c}>{c}</Chip>)}</div>
             <p className="text-[13px] text-muted-dark">{a.body}</p>
             <p className="text-xs text-muted">{when(a.sentAt)} · {a.sentBy} · read by {Math.round(60 + (a.id.length * 7) % 30)}%</p>
           </li>
@@ -78,6 +80,7 @@ function Announcements() {
             <Field label="Audience">{(id) => <Select id={id} value={audience} onChange={(e) => setAudience(e.target.value)}>{['All towers', 'Tower A', 'Tower B', 'Tower C', 'Owners only', 'Tenants only'].map((o) => <option key={o}>{o}</option>)}</Select>}</Field>
             <div className="flex flex-col gap-1.5"><span className="label">Channels</span><div className="flex flex-wrap gap-3 pt-1.5">{['App push', 'WhatsApp', 'Email', 'Lobby screens'].map((c) => <Checkbox key={c} checked={channels.includes(c)} onChange={() => toggleCh(c)} label={c} />)}</div></div>
           </div>
+          <Checkbox checked={emergency} onChange={setEmergency} label="Emergency broadcast" sub="For water cuts, lift breakdowns and security advisories. Sent by push and SMS, and shown even to residents who turned notices off." />
         </div>
       </Modal>
     </Card>

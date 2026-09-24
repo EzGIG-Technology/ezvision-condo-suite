@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CheckCircle2, Download, FileText, Lock, Search, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Download, FileText, Lock, Search, ShieldCheck } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { Card, CardHeader, Chip, Input, Segmented, Select, type ChipTone } from '@/components/ui';
 import { Button } from '@/components/ui/Button';
@@ -91,6 +91,17 @@ export default function Privacy() {
             <p className="sub">Printed at every entrance and shown in the app and on the visitor pass.</p>
             <Button icon={<FileText className="h-4 w-4" />} onClick={() => { downloadFile('cctv-signage-notice.txt', SIGNAGE, 'text/plain;charset=utf-8'); toast.success('Signage text downloaded'); }}>Download signage text</Button>
             <div className="rounded-xl bg-ice p-3 text-xs text-muted-dark"><Lock className="mr-1 inline h-3.5 w-3.5" />Face data never leaves the on-site edge server. Only alert snapshots go to the cloud, encrypted.</div>
+          </Card>
+          <Card className="flex flex-col gap-3 p-4">
+            <div className="flex items-center gap-2"><AlertTriangle className="h-5 w-5 text-warn-ink" /><h2 className="h2">Breach response</h2></div>
+            <p className="sub">What happens if personal data is lost, leaked or accessed without permission.</p>
+            <ol className="flex flex-col gap-1.5 text-[12.5px] text-muted-dark">
+              {['Contain it: suspend the account or device and change keys (EzTEC on call, 24/7).', 'Assess within 24 hours: what data, how many people, what harm.', 'Notify the Personal Data Protection Commissioner within 72 hours when harm is likely.', 'Tell the residents and visitors affected, with the steps they should take.', 'Record it here and review it with the JMB/MC.'].map((t, i) => (
+                <li key={t} className="flex gap-2"><span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-ice text-[11px] font-bold">{i + 1}</span>{t}</li>
+              ))}
+            </ol>
+            <Button icon={<AlertTriangle className="h-4 w-4" />} onClick={() => { useStore.getState().log({ who: useStore.getState().session.portal?.name ?? 'Farah Hanim', role: 'Building Manager', action: 'Added', record: 'Suspected data breach reported' }); toast.warning('Breach response started', 'EzTEC and the data protection officer have been alerted. Logged in the audit trail.'); }}>Report a suspected breach</Button>
+            <p className="text-[11.5px] text-muted">Data is encrypted in transit and at rest, and hosted in Malaysia.</p>
           </Card>
         </div>
       </div>

@@ -67,7 +67,7 @@ type State = Seed & {
   logRider: (r: { platform: string; name: string; phone: string; plate: string; unit: string; zone: 'dropoff' | 'unit'; by: string }) => { visitId?: string; approvalId?: string };
   // parcels
   logParcel: (p: Omit<Parcel, 'id' | 'loggedAt' | 'status' | 'code'>) => Parcel;
-  collectParcel: (id: string, by: string) => void;
+  collectParcel: (id: string, by: string, proof?: string) => void;
   // permits
   setPermitStatus: (id: string, status: Permit['status']) => void;
   markDepositPaid: (id: string) => void;
@@ -88,6 +88,9 @@ type State = Seed & {
   startCall: (unit: string, from: string) => void;
   answerCall: () => void;
   endCall: (outcome: NonNullable<IntercomCall['outcome']>) => void;
+  // courier passes
+  createCourierPass: (unit: string, courier: string) => string;
+  redeemCourierPass: (code: string, by: string) => { ok: boolean; reason?: string; unit?: string };
   // guardhouse messages
   sendMessage: (unit: string, from: 'resident' | 'guard', text: string) => void;
   markMessagesRead: (unit: string, reader: 'resident' | 'guard') => void;
@@ -289,7 +292,7 @@ export const useStore = create<State>()(
         }
         return parcel;
       },
-      collectParcel: (id, by) => set({ parcels: get().parcels.map((p) => (p.id === id ? { ...p, status: 'collected', collectedAt: now(), collectedBy: by } : p)) }),
+      collectParcel: (id, by, proof) => set({ parcels: get().parcels.map((p) => (p.id === id ? { ...p, status: 'collected', collectedAt: now(), collectedBy: by, proof: proof ?? (p.locker ? 'Locker opened with pickup code' : 'Pickup code') } : p)) }),
 
       setPermitStatus: (id, status) => {
         const p = get().permits.find((x) => x.id === id);
@@ -406,6 +409,28 @@ export const useStore = create<State>()(
         if (outcome === 'door_opened') get().log({ who: c.unit, role: 'Resident', action: 'Changed', record: `Opened the lobby door from the intercom (${c.from})` });
       },
 
+      createCourierPass: (unit, courier) => {
+        const code = `${unit.replace(/-/g, '')}${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+        set({ courierPasses: [{ code, unit, courier, createdAt: now() }, ...get().courierPasses] });
+        return code;
+      },
+      redeemCourierPass: (raw, by) => {
+        const code = raw.trim().toUpperCase();
+        const p = get().courierPasses.find((x) => x.code === code);
+        if (!p) return { ok: false, reason: 'No courier pass with that code.' };
+        if (p.usedAt) return { ok: false, reason: `Already used at ${hhmm(p.usedAt)}. Courier passes work once.` };
+        if (new Date(p.createdAt).toDateString() !== new Date().toDateString()) return { ok: false, reason: 'This pass was for another day.' };
+        const photoVariant = 1 + Math.floor(Math.random() * 8);
+        set({ courierPasses: get().courierPasses.map((x) => (x.code === code ? { ...x, usedAt: now(), usedBy: by, photoVariant } : x)) });
+        get().createVisit({
+          name: `${p.courier} courier`, phone: '—', type: 'rider', unit: p.unit, host: get().units.find((u) => u.unit === p.unit)?.name ?? p.unit, status: 'on_site', entry: `Courier pass · ${by}`,
+          checkIn: now(), validFrom: now(), validTo: new Date(Date.now() + 20 * 60_000).toISOString(), verification: 'Courier pass + photo', selfie: false, faceVariant: photoVariant, people: 1,
+          createdBy: 'guard', note: 'Single-use courier pass', zone: 'unit', platform: p.courier,
+        });
+        get().addNotice({ unit: p.unit, title: 'Courier pass used', body: `${p.courier} courier let in by ${by}. A photo of the courier was taken at the gate.`, kind: 'parcel', link: '/app/parcels' });
+        return { ok: true, unit: p.unit };
+      },
+
       sendMessage: (unit, from, text) => {
         set({ messages: [...get().messages, { id: uid('gm'), unit, from, text, at: now(), read: false }] });
         if (from === 'guard') get().addNotice({ unit, title: 'Guardhouse replied', body: text, kind: 'message', link: '/app/guardhouse' });
@@ -415,8 +440,8 @@ export const useStore = create<State>()(
 
       sendAnnouncement: (a) => {
         set({ announcements: [{ ...a, id: uid('an'), sentAt: now() }, ...get().announcements] });
-        if (/all|tower a/i.test(a.audience)) get().addNotice({ unit: get().resident.unit, title: a.title, body: a.body, kind: 'announcement' });
-        get().log({ who: a.sentBy, role: 'Building Manager', action: 'Sent', record: `Announcement "${a.title}"` });
+        if (/all|tower a/i.test(a.audience)) get().addNotice({ unit: get().resident.unit, title: a.emergency ? `Emergency: ${a.title}` : a.title, body: a.body, kind: a.emergency ? 'security' : 'announcement' });
+        get().log({ who: a.sentBy, role: 'Building Manager', action: 'Sent', record: `${a.emergency ? 'Emergency broadcast' : 'Announcement'} "${a.title}"` });
       },
       setTicketState: (id, state) => {
         const t = get().tickets.find((x) => x.id === id);
