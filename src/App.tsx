@@ -19,6 +19,7 @@ const Residents = lazy(() => import('@/pages/portal/Residents'));
 const Watchlist = lazy(() => import('@/pages/portal/Watchlist'));
 const Guards = lazy(() => import('@/pages/portal/Guards'));
 const Community = lazy(() => import('@/pages/portal/Community'));
+const Facilities = lazy(() => import('@/pages/portal/Facilities'));
 const Reports = lazy(() => import('@/pages/portal/Reports'));
 const Rules = lazy(() => import('@/pages/portal/Rules'));
 const Privacy = lazy(() => import('@/pages/portal/Privacy'));
@@ -84,6 +85,7 @@ export default function App() {
               <Route path="watchlist" element={<Watchlist />} />
               <Route path="guards" element={<Guards />} />
               <Route path="community" element={<Community />} />
+              <Route path="facilities" element={<Facilities />} />
               <Route path="reports" element={<Reports />} />
               <Route path="rules" element={<Rules />} />
               <Route path="privacy" element={<Privacy />} />

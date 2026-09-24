@@ -174,6 +174,30 @@ export interface LiftBooking {
   kind: 'move_in' | 'move_out' | 'delivery';
 }
 
+export type FacilityKind = 'hall' | 'bbq' | 'court' | 'gym' | 'pool' | 'room' | 'other';
+
+export interface Facility {
+  id: string;
+  name: string;
+  kind: FacilityKind;
+  /** Fee per booking, in RM. 0 means free. */
+  fee: number;
+  /** Refundable deposit, in RM. */
+  deposit: number;
+  /** Longest single booking, in hours. */
+  maxHours: number;
+  /** First bookable hour (0 to 23). */
+  opens: number;
+  /** Hour the last booking must end by (1 to 24). */
+  closes: number;
+  /** How many days ahead residents can book. */
+  advanceDays: number;
+  /** Rules shown to residents when they book. */
+  note: string;
+  /** Closed facilities stay listed in the portal but residents cannot book them. */
+  active: boolean;
+}
+
 export interface Booking {
   id: string;
   facility: string;

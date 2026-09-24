@@ -1,22 +1,13 @@
 import { useState } from 'react';
-import { CalendarDays, Dumbbell, Flame, PartyPopper, Trophy, X } from 'lucide-react';
+import { CalendarDays, X } from 'lucide-react';
 import { useStore } from '@/store/useStore';
-import { Card, Chip, Confirm, Modal, Select } from '@/components/ui';
+import { Card, Chip, Confirm, Empty, Modal, Select } from '@/components/ui';
 import { Button } from '@/components/ui/Button';
 import { cn, rm } from '@/lib/utils';
 import { useDocumentTitle } from '@/lib/hooks';
+import { FACILITY_KINDS, hourLabel } from '@/lib/facilities';
 import { toast } from '@/store/toast';
 import type { Booking } from '@/data/types';
-
-const FACILITIES = [
-  { name: 'Function hall', icon: PartyPopper, fee: 150, deposit: 300, max: 5, note: 'Up to 80 guests. Guest passes created for you.' },
-  { name: 'BBQ pit 1', icon: Flame, fee: 30, deposit: 100, max: 4, note: 'Near the pool. Bring your own charcoal.' },
-  { name: 'BBQ pit 2', icon: Flame, fee: 30, deposit: 100, max: 4, note: 'Garden side, covered.' },
-  { name: 'Squash court', icon: Trophy, fee: 0, deposit: 0, max: 1, note: 'Free. One hour per unit per day.' },
-  { name: 'Tennis court', icon: Trophy, fee: 0, deposit: 0, max: 2, note: 'Free. Lights until 22:00.' },
-  { name: 'Gym studio', icon: Dumbbell, fee: 0, deposit: 0, max: 1, note: 'For private classes. Main gym needs no booking.' },
-];
-const HOURS = Array.from({ length: 15 }, (_, i) => i + 8);
 
 export default function ResidentBook() {
   useDocumentTitle('Book a facility');
@@ -25,7 +16,9 @@ export default function ResidentBook() {
   const restriction = useStore((s) => s.feeRestriction);
   const units = useStore((s) => s.units);
   const { createBooking, cancelBooking } = useStore.getState();
-  const [fac, setFac] = useState(FACILITIES[1]);
+  const allFacilities = useStore((s) => s.facilities);
+  const facilities = allFacilities.filter((f) => f.active);
+  const [facId, setFacId] = useState<string | null>(null);
   const [day, setDay] = useState(0);
   const [start, setStart] = useState<number | null>(null);
   const [hours, setHours] = useState(2);
@@ -33,12 +26,23 @@ export default function ResidentBook() {
   const [paying, setPaying] = useState(false);
   const [cancel, setCancel] = useState<Booking | null>(null);
 
+  const fac = facilities.find((f) => f.id === facId) ?? facilities[0];
+  if (!fac) {
+    return (
+      <Card className="p-4">
+        <Empty icon={<CalendarDays className="h-5 w-5" />} title="No facilities to book" body="Management has not opened any facilities for booking yet." />
+      </Card>
+    );
+  }
+  const hoursList = Array.from({ length: fac.closes - fac.opens }, (_, i) => fac.opens + i);
+  const days = Math.min(fac.advanceDays, 30);
+
   const date = new Date(); date.setDate(date.getDate() + day); date.setHours(0, 0, 0, 0);
   const onDay = bookings.filter((b) => b.status === 'confirmed' && b.facility === fac.name && new Date(b.date).toDateString() === date.toDateString());
   const taken = (h: number) => onDay.some((b) => h >= b.from && h < b.to);
   const past = (h: number) => day === 0 && h <= new Date().getHours();
-  const dur = Math.min(hours, fac.max);
-  const fits = start !== null && Array.from({ length: dur }, (_, i) => start + i).every((h) => h <= 22 && !taken(h));
+  const dur = Math.min(hours, fac.maxHours);
+  const fits = start !== null && Array.from({ length: dur }, (_, i) => start + i).every((h) => h < fac.closes && !taken(h));
   const mine = bookings.filter((b) => b.unit === unit && b.status === 'confirmed' && new Date(b.date) >= new Date(new Date().setHours(0, 0, 0, 0))).sort((a, b) => +new Date(a.date) - +new Date(b.date));
   const blocked = restriction && units.find((u) => u.unit === unit)?.feesOk === false;
 
@@ -57,19 +61,22 @@ export default function ResidentBook() {
     <div className="flex flex-col gap-4">
       {blocked && <p className="rounded-xl bg-danger-soft p-3 text-[13px] text-danger-ink">Bookings are paused for your unit until outstanding fees are paid.</p>}
       <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 scrollbar-thin">
-        {FACILITIES.map((f) => (
-          <button key={f.name} type="button" aria-pressed={fac.name === f.name} onClick={() => { setFac(f); setStart(null); setHours(Math.min(2, f.max)); }}
-            className={cn('flex w-28 shrink-0 flex-col items-start gap-2 rounded-2xl border p-3 text-left', fac.name === f.name ? 'border-brand bg-brand-soft' : 'border-line bg-white')}>
-            <f.icon className={cn('h-5 w-5', fac.name === f.name ? 'text-brand' : 'text-muted')} />
-            <span className="text-[13px] font-bold leading-tight">{f.name}</span>
-            <span className="text-[11px] text-muted">{f.fee ? `${rm(f.fee)} / slot` : 'Free'}</span>
-          </button>
-        ))}
+        {facilities.map((f) => {
+          const Icon = FACILITY_KINDS[f.kind].icon;
+          return (
+            <button key={f.id} type="button" aria-pressed={fac.id === f.id} onClick={() => { setFacId(f.id); setStart(null); setDay((d) => Math.min(d, Math.min(f.advanceDays, 30) - 1)); setHours(Math.min(2, f.maxHours)); }}
+              className={cn('flex w-28 shrink-0 flex-col items-start gap-2 rounded-2xl border p-3 text-left', fac.id === f.id ? 'border-brand bg-brand-soft' : 'border-line bg-white')}>
+              <Icon className={cn('h-5 w-5', fac.id === f.id ? 'text-brand' : 'text-muted')} />
+              <span className="text-[13px] font-bold leading-tight">{f.name}</span>
+              <span className="text-[11px] text-muted">{f.fee ? `${rm(f.fee)} / booking` : 'Free'}</span>
+            </button>
+          );
+        })}
       </div>
-      <p className="text-xs text-muted">{fac.note}{fac.deposit ? ` Refundable deposit ${rm(fac.deposit)}.` : ''}</p>
+      <p className="text-xs text-muted">Open {hourLabel(fac.opens)} to {hourLabel(fac.closes)}.{fac.note ? ` ${fac.note}` : ''}{fac.deposit ? ` Refundable deposit ${rm(fac.deposit)}.` : ''}</p>
 
       <div className="-mx-4 flex gap-2 overflow-x-auto px-4 scrollbar-thin">
-        {Array.from({ length: 14 }, (_, i) => i).map((d) => {
+        {Array.from({ length: days }, (_, i) => i).map((d) => {
           const x = new Date(); x.setDate(x.getDate() + d);
           return (
             <button key={d} type="button" aria-pressed={day === d} onClick={() => { setDay(d); setStart(null); }} className={cn('flex h-16 w-14 shrink-0 flex-col items-center justify-center rounded-2xl border', day === d ? 'border-brand bg-brand text-white' : 'border-line bg-white')}>
@@ -82,16 +89,16 @@ export default function ResidentBook() {
 
       <Card className="p-4">
         <div className="mb-3 flex items-center justify-between"><h2 className="h2">Pick a start time</h2>
-          <Select aria-label="Duration" value={dur} onChange={(e) => setHours(Number(e.target.value))} className="h-9 w-28 text-xs">{Array.from({ length: fac.max }, (_, i) => i + 1).map((h) => <option key={h} value={h}>{h} hour{h > 1 ? 's' : ''}</option>)}</Select>
+          <Select aria-label="Duration" value={dur} onChange={(e) => setHours(Number(e.target.value))} className="h-9 w-28 text-xs">{Array.from({ length: fac.maxHours }, (_, i) => i + 1).map((h) => <option key={h} value={h}>{h} hour{h > 1 ? 's' : ''}</option>)}</Select>
         </div>
         <div className="grid grid-cols-4 gap-2">
-          {HOURS.map((h) => {
+          {hoursList.map((h) => {
             const off = taken(h) || past(h);
             const inSel = start !== null && h >= start && h < start + dur;
             return (
               <button key={h} type="button" disabled={off} aria-pressed={inSel} onClick={() => setStart(h)}
                 className={cn('h-11 rounded-xl text-[13px] font-semibold', off ? 'cursor-not-allowed bg-[#EEF1F7] text-[#A7B0C8] line-through' : inSel ? 'bg-brand text-white' : 'border border-line bg-white hover:border-brand')}>
-                {h}:00
+                {hourLabel(h)}
               </button>
             );
           })}

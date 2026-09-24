@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Bell, CalendarPlus, Camera, Megaphone, Package, Plus, Send, Vote, Wallet, Wrench, X } from 'lucide-react';
+import { Bell, CalendarPlus, Camera, Megaphone, Package, Plus, Send, Settings2, Vote, Wallet, Wrench, X } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { Card, CardHeader, Checkbox, Chip, Empty, Field, Input, Modal, Progress, Segmented, Select, Switch, Textarea, type ChipTone } from '@/components/ui';
-import { Button } from '@/components/ui/Button';
+import { Button, LinkButton } from '@/components/ui/Button';
 import { cn, relative, rm, when } from '@/lib/utils';
 import { toast } from '@/store/toast';
 import type { Ticket } from '@/data/types';
@@ -15,7 +15,6 @@ const TABS: { value: Tab; label: string }[] = [
 ];
 const STATES: Ticket['state'][] = ['New', 'Assigned', 'In progress', 'Investigating', 'Monitoring', 'Resolved'];
 const stateTone: Record<Ticket['state'], ChipTone> = { New: 'blue', Assigned: 'purple', 'In progress': 'amber', Investigating: 'amber', Monitoring: 'grey', Resolved: 'teal' };
-const FACILITIES = ['Function hall', 'BBQ pit 1', 'BBQ pit 2', 'Squash court', 'Tennis court', 'Gym studio'];
 
 export default function Community() {
   const [params, setParams] = useSearchParams();
@@ -84,38 +83,44 @@ function Announcements() {
 
 function Bookings() {
   const bookings = useStore((s) => s.bookings);
+  const facilities = useStore((s) => s.facilities);
   const { createBooking, cancelBooking } = useStore.getState();
   const [day, setDay] = useState(0);
   const [open, setOpen] = useState(false);
-  const [fac, setFac] = useState(FACILITIES[0]);
+  const [fac, setFac] = useState(facilities[0]?.name ?? '');
   const [unit, setUnit] = useState('');
   const [from, setFrom] = useState(10);
   const [to, setTo] = useState(12);
   const date = new Date(); date.setDate(date.getDate() + day);
   const todays = bookings.filter((b) => b.status === 'confirmed' && new Date(b.date).toDateString() === date.toDateString());
-  const H0 = 7, H1 = 23;
+  // Rows: every facility, plus any old name that still has bookings on this day.
+  const rows = [...facilities.map((f) => f.name), ...todays.map((b) => b.facility).filter((n) => !facilities.some((f) => f.name === n))].filter((n, i, a) => a.indexOf(n) === i);
+  const H0 = Math.min(7, ...facilities.map((f) => f.opens), ...todays.map((b) => b.from));
+  const H1 = Math.max(23, ...facilities.map((f) => f.closes), ...todays.map((b) => b.to));
+  const chosen = facilities.find((f) => f.name === fac) ?? facilities[0];
 
   const add = () => {
+    if (!chosen) return toast.error('Add a facility first', 'Go to Facilities to add one.');
     if (!unit.trim()) return toast.error('Enter the unit');
+    if (from < chosen.opens || to > chosen.closes) return toast.error('Outside opening hours', `${chosen.name} is open ${chosen.opens}:00 to ${chosen.closes}:00.`);
     if (to <= from) return toast.error('End time must be after start');
-    const clash = todays.some((b) => b.facility === fac && from < b.to && to > b.from);
-    if (clash) return toast.error('That slot is taken', `${fac} is already booked in that time.`);
+    const clash = todays.some((b) => b.facility === chosen.name && from < b.to && to > b.from);
+    if (clash) return toast.error('That slot is taken', `${chosen.name} is already booked in that time.`);
     const d = new Date(date); d.setHours(from, 0, 0, 0);
-    const paid = /hall/i.test(fac) ? [150, 300] : /BBQ/.test(fac) ? [30, 100] : [0, 0];
-    createBooking({ facility: fac, unit: unit.toUpperCase(), date: d.toISOString(), from, to, fee: paid[0], deposit: paid[1] });
-    toast.success('Booking confirmed', `${fac} · ${from}:00 to ${to}:00`);
+    createBooking({ facility: chosen.name, unit: unit.toUpperCase(), date: d.toISOString(), from, to, fee: chosen.fee, deposit: chosen.deposit });
+    toast.success('Booking confirmed', `${chosen.name} · ${from}:00 to ${to}:00`);
     setOpen(false); setUnit('');
   };
 
   return (
     <Card className="p-4">
       <CardHeader title="Facility bookings" sub={date.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
-        action={<Button variant="primary" size="sm" icon={<CalendarPlus className="h-4 w-4" />} onClick={() => setOpen(true)}>Book for a unit</Button>} />
+        action={<div className="flex flex-wrap gap-2"><LinkButton size="sm" to="/portal/facilities" icon={<Settings2 className="h-4 w-4" />}>Manage facilities</LinkButton><Button variant="primary" size="sm" icon={<CalendarPlus className="h-4 w-4" />} onClick={() => setOpen(true)}>Book for a unit</Button></div>} />
       <div className="mt-3"><Segmented label="Day" value={String(day)} onChange={(v) => setDay(Number(v))} options={[0, 1, 2, 3, 4, 5, 6].map((d) => ({ value: String(d), label: d === 0 ? 'Today' : new Date(Date.now() + d * 864e5).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric' }) }))} /></div>
       <div className="mt-4 overflow-x-auto">
         <div className="min-w-[760px]">
           <div className="ml-32 flex text-[11px] text-muted">{Array.from({ length: H1 - H0 }, (_, i) => <span key={i} className="flex-1 border-l border-line-soft pl-1">{H0 + i}:00</span>)}</div>
-          {FACILITIES.map((f) => (
+          {rows.map((f) => (
             <div key={f} className="flex items-center border-t border-line-soft">
               <span className="w-32 shrink-0 py-3 text-[13px] font-semibold">{f}</span>
               <div className="relative h-10 flex-1">
@@ -135,10 +140,10 @@ function Bookings() {
       <Modal open={open} onClose={() => setOpen(false)} title="Book a facility for a unit"
         footer={<><Button onClick={() => setOpen(false)}>Cancel</Button><Button variant="primary" onClick={add}>Confirm booking</Button></>}>
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Facility">{(id) => <Select id={id} value={fac} onChange={(e) => setFac(e.target.value)}>{FACILITIES.map((f) => <option key={f}>{f}</option>)}</Select>}</Field>
+          <Field label="Facility">{(id) => <Select id={id} value={chosen?.name ?? ''} onChange={(e) => setFac(e.target.value)}>{facilities.map((f) => <option key={f.id}>{f.name}</option>)}</Select>}</Field>
           <Field label="Unit">{(id) => <Input id={id} value={unit} onChange={(e) => setUnit(e.target.value)} placeholder="A-15-07" className="font-mono uppercase" />}</Field>
-          <Field label="From">{(id) => <Select id={id} value={from} onChange={(e) => setFrom(Number(e.target.value))}>{Array.from({ length: 16 }, (_, i) => i + 7).map((h) => <option key={h} value={h}>{h}:00</option>)}</Select>}</Field>
-          <Field label="To">{(id) => <Select id={id} value={to} onChange={(e) => setTo(Number(e.target.value))}>{Array.from({ length: 16 }, (_, i) => i + 8).map((h) => <option key={h} value={h}>{h}:00</option>)}</Select>}</Field>
+          <Field label="From">{(id) => <Select id={id} value={from} onChange={(e) => setFrom(Number(e.target.value))}>{Array.from({ length: 24 }, (_, i) => i).map((h) => <option key={h} value={h}>{h}:00</option>)}</Select>}</Field>
+          <Field label="To">{(id) => <Select id={id} value={to} onChange={(e) => setTo(Number(e.target.value))}>{Array.from({ length: 24 }, (_, i) => i + 1).map((h) => <option key={h} value={h}>{h}:00</option>)}</Select>}</Field>
         </div>
       </Modal>
     </Card>

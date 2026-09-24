@@ -1,6 +1,6 @@
 import { ago } from '@/lib/utils';
 import type {
-  Alert, Approval, Announcement, AuditEntry, Bill, Booking, Checkpoint, DataRequest, Guard, LiftBooking, Parcel, Permit,
+  Alert, Approval, Announcement, AuditEntry, Bill, Booking, Checkpoint, Facility, DataRequest, Guard, LiftBooking, Parcel, Permit,
   ResidentNotice, Retention, Rule, Ticket, UnitRecord, UnknownFace, UnknownPlate, Visit, WatchEntry,
 } from './types';
 
@@ -196,6 +196,15 @@ export function makeSeed() {
     { id: 'lb-4', date: dayAt(3, 9), slot: '09:00 to 13:00', what: 'Move-in', unit: 'B-06-10', lift: 'Tower B service lift', kind: 'move_in' },
   ];
 
+  const facilities: Facility[] = [
+    { id: 'fc-1', name: 'Function hall', kind: 'hall', fee: 150, deposit: 300, maxHours: 5, opens: 8, closes: 23, advanceDays: 60, note: 'Up to 80 guests. Guest passes are created for you.', active: true },
+    { id: 'fc-2', name: 'BBQ pit 1', kind: 'bbq', fee: 30, deposit: 100, maxHours: 4, opens: 10, closes: 23, advanceDays: 30, note: 'Near the pool. Bring your own charcoal.', active: true },
+    { id: 'fc-3', name: 'BBQ pit 2', kind: 'bbq', fee: 30, deposit: 100, maxHours: 4, opens: 10, closes: 23, advanceDays: 30, note: 'Garden side, covered.', active: true },
+    { id: 'fc-4', name: 'Squash court', kind: 'court', fee: 0, deposit: 0, maxHours: 1, opens: 7, closes: 22, advanceDays: 7, note: 'Free. One hour per unit per day.', active: true },
+    { id: 'fc-5', name: 'Tennis court', kind: 'court', fee: 0, deposit: 0, maxHours: 2, opens: 7, closes: 22, advanceDays: 7, note: 'Free. Lights until 22:00.', active: true },
+    { id: 'fc-6', name: 'Gym studio', kind: 'gym', fee: 0, deposit: 0, maxHours: 1, opens: 7, closes: 22, advanceDays: 7, note: 'For private classes. The main gym needs no booking.', active: true },
+  ];
+
   const bookings: Booking[] = [
     { id: 'bk-1', facility: 'BBQ pit 1', unit: 'B-11-04', date: dayAt(0, 12), from: 12, to: 15, status: 'confirmed', fee: 30, deposit: 100 },
     { id: 'bk-2', facility: 'BBQ pit 1', unit: 'A-03-02', date: dayAt(0, 18), from: 18, to: 22, status: 'confirmed', fee: 30, deposit: 100 },
@@ -328,7 +337,7 @@ export function makeSeed() {
   ];
 
   return {
-    alerts, visits, approvals, parcels, unknownFaces, unknownPlates, watchlist, permits, liftBookings, bookings, announcements, rules, notices, bills,
+    alerts, visits, approvals, parcels, unknownFaces, unknownPlates, watchlist, permits, liftBookings, facilities, bookings, announcements, rules, notices, bills,
     checkpoints, guards, tickets, dataRequests, audit, retention, units,
     patrolStartedAt: ago(21),
     nightMode: true,

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Link, NavLink, Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Bell, Home, Plus, UserRound, Users } from 'lucide-react';
+import { ArrowLeft, Bell, CalendarDays, Home, Plus, UserRound, Users } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { PageOutlet } from '@/components/PageBoundary';
 import { Logo, FaceCrop } from '@/components/vision';
@@ -74,7 +74,7 @@ export default function ResidentLayout() {
             { to: '/app', label: 'Home', icon: Home, end: true },
             { to: '/app/visitors', label: 'Visitors', icon: Users },
             { to: '/app/invite', label: 'Invite', icon: Plus, center: true },
-            { to: '/app/activity', label: 'Activity', icon: Bell, badge: unread },
+            { to: '/app/book', label: 'Book', icon: CalendarDays },
             { to: '/app/unit', label: 'My unit', icon: UserRound },
           ].map((n) => (
             <NavLink key={n.to} to={n.to} end={n.end} className={({ isActive }) => cn('relative flex h-16 flex-col items-center justify-center gap-0.5 text-[11px] font-semibold', isActive ? 'text-brand' : 'text-muted')}>
@@ -82,7 +82,6 @@ export default function ResidentLayout() {
                 <span className="-mt-6 flex h-14 w-14 items-center justify-center rounded-full bg-brand text-white shadow-pop"><n.icon className="h-6 w-6" /></span>
               ) : <n.icon className="h-[22px] w-[22px]" />}
               {n.label}
-              {!!n.badge && <span className="absolute right-[22%] top-2 h-2 w-2 rounded-full bg-danger-dot" />}
             </NavLink>
           ))}
         </nav>

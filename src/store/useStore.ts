@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { makeSeed, type Seed } from '@/data/seed';
 import type {
-  Alert, AlertStatus, Announcement, Approval, AuditEntry, Booking, Parcel, Permit, ResidentNotice, Rule, Session, Ticket, UnitRecord, Visit, WatchEntry,
+  Alert, AlertStatus, Announcement, Approval, AuditEntry, Booking, Facility, Parcel, Permit, ResidentNotice, Rule, Session, Ticket, UnitRecord, Visit, WatchEntry,
 } from '@/data/types';
 import { code4, hhmm, uid } from '@/lib/utils';
 
@@ -52,6 +52,10 @@ type State = Seed & {
   setPermitStatus: (id: string, status: Permit['status']) => void;
   markDepositPaid: (id: string) => void;
   createPermit: (p: Omit<Permit, 'id' | 'submittedAt' | 'status' | 'onSite'>) => string;
+  // facilities
+  addFacility: (f: Omit<Facility, 'id'>) => string;
+  updateFacility: (id: string, patch: Partial<Omit<Facility, 'id'>>) => void;
+  removeFacility: (id: string) => void;
   // bookings
   createBooking: (b: Omit<Booking, 'id' | 'status'>) => string;
   cancelBooking: (id: string) => void;
@@ -223,6 +227,31 @@ export const useStore = create<State>()(
         const id = `RN-0${430 + get().permits.length}`;
         set({ permits: [{ ...p, id, submittedAt: now(), status: 'review', onSite: 0 }, ...get().permits] });
         return id;
+      },
+
+      addFacility: (f) => {
+        const id = uid('fc');
+        set({ facilities: [...get().facilities, { ...f, id }] });
+        return id;
+      },
+      updateFacility: (id, patch) => {
+        const old = get().facilities.find((f) => f.id === id);
+        if (!old) return;
+        const renamed = patch.name !== undefined && patch.name !== old.name;
+        set({
+          facilities: get().facilities.map((f) => (f.id === id ? { ...f, ...patch } : f)),
+          // Bookings refer to a facility by name, so carry a rename over to them.
+          ...(renamed ? { bookings: get().bookings.map((b) => (b.facility === old.name ? { ...b, facility: patch.name! } : b)) } : {}),
+        });
+      },
+      removeFacility: (id) => {
+        const f = get().facilities.find((x) => x.id === id);
+        if (!f) return;
+        const today = new Date(new Date().setHours(0, 0, 0, 0));
+        set({
+          facilities: get().facilities.filter((x) => x.id !== id),
+          bookings: get().bookings.map((b) => (b.facility === f.name && b.status === 'confirmed' && new Date(b.date) >= today ? { ...b, status: 'cancelled' } : b)),
+        });
       },
 
       createBooking: (b) => {
