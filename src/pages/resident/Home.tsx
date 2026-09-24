@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { CalendarDays, ChevronRight, CreditCard, Hammer, MessageCircle, Package, ScanFace, ShieldAlert, ShieldCheck, Truck, UserPlus, Users, Wrench } from 'lucide-react';
+import { CalendarDays, ChevronRight, CreditCard, Hammer, MessageCircle, Package, ScanFace, ShieldAlert, ShieldCheck, Truck, UserPlus, Users, Vote, Wrench } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { FaceCrop } from '@/components/vision';
 import { Card, Chip } from '@/components/ui';
@@ -17,6 +17,7 @@ export default function ResidentHome() {
   const bookings = useStore((s) => s.bookings);
   const faceEnrolled = useStore((s) => s.faceEnrolled);
   const messages = useStore((s) => s.messages);
+  const resolutions = useStore((s) => s.resolutions);
   const unit = resident.unit;
 
   const today = new Date().toDateString();
@@ -28,6 +29,7 @@ export default function ResidentHome() {
   const security = notices.find((n) => n.unit === unit && n.kind === 'security');
   const nextBooking = bookings.filter((b) => b.unit === unit && b.status === 'confirmed' && new Date(b.date) > new Date()).sort((a, b) => +new Date(a.date) - +new Date(b.date))[0];
   const hour = new Date().getHours();
+  const toVote = resolutions.find((r) => r.status === 'open' && !r.voted[unit]);
 
   const actions = [
     { to: '/app/invite', label: 'Invite', icon: UserPlus, tone: 'bg-brand text-white' },
@@ -64,6 +66,14 @@ export default function ResidentHome() {
         <span className="flex-1"><span className="block font-extrabold">Emergency SOS</span><span className="text-xs text-white/85">Alerts the guardhouse with your unit and location</span></span>
         <ChevronRight className="h-5 w-5" />
       </Link>
+
+      {toVote && (
+        <Link to="/app/vote" className="card flex items-center gap-3 border-l-4 border-l-teal p-4">
+          <Vote className="h-5 w-5 shrink-0 text-teal" />
+          <span className="flex-1"><span className="block text-[13.5px] font-bold">Vote open: {toVote.title}</span><span className="text-xs text-muted">{toVote.meeting} · closes {new Date(toVote.closes).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span></span>
+          <ChevronRight className="h-4 w-4 text-muted" />
+        </Link>
+      )}
 
       {security && (
         <Card className="flex gap-3 border-l-4 border-l-danger p-4">

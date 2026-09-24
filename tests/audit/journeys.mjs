@@ -344,6 +344,69 @@ await step('Move-in: resident books the service lift and pays the deposit; manag
   await expect(res.getByText(/refunded/)).toBeVisible(T);
 });
 
+await step('Limits: manager lowers visitor and car limits in Site settings; the resident app enforces them; limits restored', async () => {
+  await go(portal, '/portal/settings');
+  await portal.getByLabel('Visitor passes per unit per day').fill('1');
+  await portal.getByLabel('Resident cars per unit').fill('2');
+  await portal.getByRole('button', { name: 'Save limits' }).click();
+  await expect(portal.getByText('Limits saved')).toBeVisible(T);
+  await go(res, '/app/invite');
+  await res.getByLabel("Visitor's name").fill('Audit Limit Guest');
+  await res.getByLabel('Mobile number').fill('012-555 0199');
+  await res.getByRole('button', { name: 'Create pass and send' }).click();
+  await expect(res.getByText('Up to 1 visitor passes a day')).toBeVisible(T);
+  await go(res, '/app/unit');
+  await res.getByRole('heading', { name: 'Cars' }).locator('..').getByRole('button', { name: 'Add' }).click();
+  await res.getByRole('dialog').getByLabel('Plate').fill('AUD 9');
+  await res.getByRole('dialog').getByRole('button', { name: 'Register' }).click();
+  await expect(res.getByText('Maximum 2 cars per unit')).toBeVisible(T);
+  await go(portal, '/portal/settings');
+  await portal.getByLabel('Visitor passes per unit per day').fill('8');
+  await portal.getByLabel('Resident cars per unit').fill('3');
+  await portal.getByRole('button', { name: 'Save limits' }).click();
+  await expect(portal.getByText('Limits saved')).toBeVisible(T);
+});
+
+await step('Multi-day pass: resident invites a guest for three days; the pass shows the last day', async () => {
+  await go(res, '/app/invite');
+  await res.getByLabel("Visitor's name").fill('Audit Stay Guest');
+  await res.getByLabel('Mobile number').fill('012-555 0102');
+  await res.getByRole('switch', { name: 'Staying more than one day' }).click();
+  const first = await res.getByLabel('First day').inputValue();
+  const last = new Date(`${first}T00:00`); last.setDate(last.getDate() + 3);
+  const lastStr = `${last.getFullYear()}-${String(last.getMonth() + 1).padStart(2, '0')}-${String(last.getDate()).padStart(2, '0')}`;
+  await res.getByLabel('Last day').fill(lastStr);
+  await res.getByRole('button', { name: 'Create pass and send' }).click();
+  await res.waitForURL(/\/app\/pass\//, T);
+  await expect(res.getByText(last.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }), { exact: false }).first()).toBeVisible(T);
+});
+
+await step('e-Voting: resident votes in the app; manager records a proxy vote, closes voting; resident sees the result', async () => {
+  await go(res, '/app');
+  await res.getByRole('link', { name: /Vote open: Install 12 EV chargers/ }).click();
+  await res.waitForURL('**/app/vote', T);
+  await res.getByRole('button', { name: 'For', exact: true }).click();
+  await res.getByRole('dialog').getByRole('button', { name: 'Submit vote' }).click();
+  await expect(res.getByText(/You voted for/)).toBeVisible(T);
+  await go(portal, '/portal/community?tab=voting');
+  await expect(portal.getByText('319 · ', { exact: false })).toBeVisible(T);
+  await portal.getByRole('button', { name: 'Record proxy vote' }).click();
+  await portal.getByRole('dialog').getByLabel('Unit').fill('B-12-05');
+  await portal.getByRole('dialog').getByRole('button', { name: 'Against' }).click();
+  await expect(portal.getByText('Proxy vote recorded for B-12-05')).toBeVisible(T);
+  await portal.getByRole('button', { name: 'Record proxy vote' }).click();
+  await portal.getByRole('dialog').getByLabel('Unit').fill('A-15-07');
+  await portal.getByRole('dialog').getByRole('button', { name: 'Against' }).click();
+  await expect(portal.getByText('A-15-07 has already voted')).toBeVisible(T);
+  await portal.getByRole('dialog').getByRole('button', { name: 'Cancel' }).click();
+  await portal.getByRole('button', { name: 'Close voting' }).click();
+  await portal.getByRole('dialog').getByRole('button', { name: 'Close and publish result' }).click();
+  await expect(portal.getByText('Resolution passed')).toBeVisible(T);
+  await go(res, '/app/vote');
+  await expect(res.getByText('No open votes')).toBeVisible(T);
+  await expect(res.locator('.card', { hasText: 'Install 12 EV chargers' }).getByText('Passed')).toBeVisible(T);
+});
+
 await step('Guard shift handover: checklist, sign off, logged out', async () => {
   await go(guard, '/guard/report');
   await guard.getByRole('tab', { name: 'Shift handover' }).click();

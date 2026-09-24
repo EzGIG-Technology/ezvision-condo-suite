@@ -97,6 +97,7 @@ function Directory() {
 
 function UnitDetail({ unitId }: { unitId: string }) {
   const units = useStore((s) => s.units);
+  const limits = useStore((s) => s.limits);
   const visits = useStore((s) => s.visits);
   const parcels = useStore((s) => s.parcels);
   const alerts = useStore((s) => s.alerts);
@@ -151,6 +152,7 @@ function UnitDetail({ unitId }: { unitId: string }) {
 
   const addVehicle = () => {
     if (!vPlate.trim()) return toast.error('Enter a plate');
+    if (u.vehicles.length >= limits.vehiclesPerUnit) return toast.error(`This unit already has ${limits.vehiclesPerUnit} cars`, 'Change the limit in Site settings, or remove a car first.');
     updateUnit(u.unit, { vehicles: [...u.vehicles, { plate: vPlate.toUpperCase().trim(), model: vModel || 'Vehicle' }] });
     toast.success(`${vPlate.toUpperCase()} registered`, 'The barrier will open for this plate from now.');
     setVehicle(false); setVPlate(''); setVModel('');

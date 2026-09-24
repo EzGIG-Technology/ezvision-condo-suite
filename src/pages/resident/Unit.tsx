@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Car, ChevronRight, CreditCard, FileText, Hammer, LogOut, Plus, ScanFace, ShieldCheck, Smartphone, UserPlus } from 'lucide-react';
+import { Car, ChevronRight, CreditCard, FileText, Hammer, LogOut, MessageCircle, Plus, ScanFace, ShieldCheck, Smartphone, Truck, UserPlus, Vote, Wrench } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { Avatar, Card, Chip, Confirm, Field, Input, Modal, Plate, Select, Switch } from '@/components/ui';
 import { Button } from '@/components/ui/Button';
@@ -12,6 +12,7 @@ export default function ResidentUnit() {
   useDocumentTitle('My unit');
   const resident = useStore((s) => s.resident);
   const units = useStore((s) => s.units);
+  const limits = useStore((s) => s.limits);
   const { updateUnit, logoutResident } = useStore.getState();
   const navigate = useNavigate();
   const u = units.find((x) => x.unit === resident.unit)!;
@@ -34,7 +35,7 @@ export default function ResidentUnit() {
   };
   const addCar = () => {
     if (!plate.trim()) return toast.error('Enter the plate');
-    if (u.vehicles.length >= 3) return toast.error('Maximum 3 cars per unit', 'Remove one first or ask the management office.');
+    if (u.vehicles.length >= limits.vehiclesPerUnit) return toast.error(`Maximum ${limits.vehiclesPerUnit} cars per unit`, 'Remove one first or ask the management office.');
     updateUnit(u.unit, { vehicles: [...u.vehicles, { plate: plate.toUpperCase().trim(), model: model || 'Car' }] });
     toast.success(`${plate.toUpperCase()} registered`, 'The barrier will open for it from now.');
     setCar(false); setPlate(''); setModel('');
@@ -84,6 +85,10 @@ export default function ResidentUnit() {
           { to: '/app/face', icon: ScanFace, label: 'Face access' },
           { to: '/app/renovation', icon: Hammer, label: 'Renovation permit' },
           { to: '/app/billing', icon: FileText, label: 'Fees and billing' },
+          { to: '/app/move', icon: Truck, label: 'Move in or out' },
+          { to: '/app/report', icon: Wrench, label: 'Report an issue' },
+          { to: '/app/guardhouse', icon: MessageCircle, label: 'Message the guardhouse' },
+          { to: '/app/vote', icon: Vote, label: 'AGM and e-voting' },
         ].map((l) => (
           <Link key={l.to} to={l.to} className="flex items-center gap-3 border-b border-line-soft px-4 py-3.5 last:border-0 hover:bg-ice"><l.icon className="h-5 w-5 text-muted" /><span className="flex-1 text-[14px] font-semibold">{l.label}</span><ChevronRight className="h-4 w-4 text-muted" /></Link>
         ))}

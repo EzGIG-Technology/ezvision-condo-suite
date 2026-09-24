@@ -1,6 +1,6 @@
 import { ago } from '@/lib/utils';
 import type {
-  Alert, Approval, Announcement, AuditEntry, Bill, Booking, Checkpoint, Facility, DataRequest, Guard, GuardMessage, LiftBooking, Parcel, Permit,
+  Alert, Approval, Announcement, AuditEntry, Bill, Booking, Checkpoint, Facility, DataRequest, Guard, GuardMessage, LiftBooking, Parcel, Permit, Resolution, SiteLimits,
   ResidentNotice, Retention, Rule, Ticket, UnitRecord, UnknownFace, UnknownPlate, Visit, WatchEntry,
 } from './types';
 
@@ -288,6 +288,15 @@ export function makeSeed() {
     { id: 'TK-1169', title: 'Noise from renovation after 6pm', meta: 'RN-0412 · C-21-02 · warning issued', evidence: false, state: 'Monitoring', unit: 'C-21-02' },
   ];
 
+  const limits: SiteLimits = { visitorsPerDay: 8, onSiteAtOnce: 6, eventGuestCap: 40, multiDayMax: 14, vehiclesPerUnit: 3 };
+
+  const resolutions: Resolution[] = [
+    { id: 'rs-4', title: 'Install 12 EV chargers at B1', detail: 'Special resolution · RM 86,000 from the sinking fund', meeting: 'EGM 2026/2', closes: dayAt(6, 23, 59), status: 'open', votes: { yes: 318, no: 74, abstain: 22 }, voted: {} },
+    { id: 'rs-3', title: 'Raise maintenance fee to RM 0.78 per sq ft', detail: 'Ordinary resolution', meeting: 'AGM 2026', closes: dayAt(-120, 23, 59), status: 'passed', votes: { yes: 402, no: 151, abstain: 18 }, voted: {} },
+    { id: 'rs-2', title: 'Ban short-term rentals (Airbnb)', detail: 'By-law amendment', meeting: 'AGM 2026', closes: dayAt(-120, 23, 59), status: 'passed', votes: { yes: 468, no: 88, abstain: 9 }, voted: {} },
+    { id: 'rs-1', title: 'Repaint Tower C facade', detail: 'RM 240,000 from the sinking fund', meeting: 'AGM 2025', closes: dayAt(-480, 23, 59), status: 'not_passed', votes: { yes: 233, no: 281, abstain: 16 }, voted: {} },
+  ];
+
   const messages: GuardMessage[] = [
     { id: 'gm-1', unit: 'A-15-07', from: 'resident', text: 'Hi, my aircond technician will come around 3pm today. Please let him up.', at: ago(26 * 60), read: true },
     { id: 'gm-2', unit: 'A-15-07', from: 'guard', text: 'Noted. We will call you when he arrives.', at: ago(26 * 60 - 3), read: true },
@@ -345,7 +354,7 @@ export function makeSeed() {
 
   return {
     alerts, visits, approvals, parcels, unknownFaces, unknownPlates, watchlist, permits, liftBookings, facilities, bookings, announcements, rules, notices, bills,
-    checkpoints, guards, tickets, messages, dataRequests, audit, retention, units,
+    checkpoints, guards, tickets, messages, limits, resolutions, dataRequests, audit, retention, units,
     patrolStartedAt: ago(21),
     nightMode: true,
     feeRestriction: true,

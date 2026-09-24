@@ -23,6 +23,7 @@ const Facilities = lazy(() => import('@/pages/portal/Facilities'));
 const Reports = lazy(() => import('@/pages/portal/Reports'));
 const Rules = lazy(() => import('@/pages/portal/Rules'));
 const Privacy = lazy(() => import('@/pages/portal/Privacy'));
+const Settings = lazy(() => import('@/pages/portal/Settings'));
 
 const GuardLayout = lazy(() => import('@/layouts/GuardLayout'));
 const GuardLogin = lazy(() => import('@/pages/guard/GuardLogin'));
@@ -53,6 +54,7 @@ const ResBilling = lazy(() => import('@/pages/resident/Billing'));
 const ResGuardhouse = lazy(() => import('@/pages/resident/Guardhouse'));
 const ResReport = lazy(() => import('@/pages/resident/Report'));
 const ResMove = lazy(() => import('@/pages/resident/Move'));
+const ResVote = lazy(() => import('@/pages/resident/Vote'));
 
 const VisitorPass = lazy(() => import('@/pages/visitor/VisitorPass'));
 const VisitorSelfie = lazy(() => import('@/pages/visitor/VisitorSelfie'));
@@ -93,6 +95,7 @@ export default function App() {
               <Route path="reports" element={<Reports />} />
               <Route path="rules" element={<Rules />} />
               <Route path="privacy" element={<Privacy />} />
+              <Route path="settings" element={<Settings />} />
               <Route path="*" element={<Navigate to="dashboard" replace />} />
             </Route>
 
@@ -128,6 +131,7 @@ export default function App() {
               <Route path="guardhouse" element={<ResGuardhouse />} />
               <Route path="report" element={<ResReport />} />
               <Route path="move" element={<ResMove />} />
+              <Route path="vote" element={<ResVote />} />
               <Route path="*" element={<Navigate to="/app" replace />} />
             </Route>
 

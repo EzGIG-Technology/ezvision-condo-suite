@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Bell, CalendarPlus, Camera, Megaphone, Package, Plus, Send, Settings2, Vote, Wallet, Wrench, X } from 'lucide-react';
-import { useStore } from '@/store/useStore';
-import { Card, CardHeader, Checkbox, Chip, Empty, Field, Input, Modal, Progress, Segmented, Select, Switch, Textarea, type ChipTone } from '@/components/ui';
+import { resolutionPasses, useStore } from '@/store/useStore';
+import { Card, CardHeader, Checkbox, Chip, Confirm, Empty, Field, Input, Modal, Progress, Segmented, Select, Switch, Textarea, type ChipTone } from '@/components/ui';
 import { Button, LinkButton } from '@/components/ui/Button';
 import { cn, relative, rm, when } from '@/lib/utils';
 import { toast } from '@/store/toast';
-import type { Ticket } from '@/data/types';
+import type { Ticket, VoteChoice } from '@/data/types';
 
 type Tab = 'announcements' | 'bookings' | 'tickets' | 'fees' | 'parcels' | 'voting';
 const TABS: { value: Tab; label: string }[] = [
@@ -283,38 +283,100 @@ function ParcelRoom() {
 }
 
 function Voting() {
-  const [votes, setVotes] = useState({ yes: 318, no: 74, abstain: 22 });
-  const [open, setOpen] = useState(false);
-  const total = votes.yes + votes.no + votes.abstain;
-  const quorum = Math.round((total / 612) * 100);
+  const resolutions = useStore((s) => s.resolutions);
+  const units = useStore((s) => s.units);
+  const session = useStore((s) => s.session.portal);
+  const { createResolution, castVote, closeResolution, log } = useStore.getState();
+  const who = session?.name ?? 'Farah Hanim';
+  const [proxyFor, setProxyFor] = useState<string | null>(null);
+  const [proxyUnit, setProxyUnit] = useState('');
+  const [closing, setClosing] = useState<string | null>(null);
+  const [create, setCreate] = useState(false);
+  const [draft, setDraft] = useState({ title: '', kind: 'Ordinary resolution', note: '', meeting: 'EGM 2026/3', days: '14' });
+  const open = resolutions.filter((r) => r.status === 'open');
+  const past = resolutions.filter((r) => r.status !== 'open');
+
+  const recordProxy = (choice: VoteChoice) => {
+    if (!proxyFor) return;
+    const unit = proxyUnit.trim().toUpperCase();
+    if (!/^[A-C]-\d{2}-\d{2}$/.test(unit)) return toast.error('Enter the unit, like B-12-05');
+    const owner = units.find((u) => u.unit === unit)?.owner ?? 'Owner';
+    if (!castVote(proxyFor, unit, choice, owner, true)) return toast.error(`${unit} has already voted`, 'Each unit votes once.');
+    log({ who, role: 'Building Manager', action: 'Added', record: `Proxy vote for ${unit}` });
+    toast.success(`Proxy vote recorded for ${unit}`);
+    setProxyFor(null); setProxyUnit('');
+  };
+  const add = () => {
+    if (!draft.title.trim()) return toast.error('Enter the resolution');
+    const closes = new Date(); closes.setDate(closes.getDate() + Number(draft.days)); closes.setHours(23, 59, 0, 0);
+    createResolution({ title: draft.title.trim(), detail: [draft.kind, draft.note.trim()].filter(Boolean).join(' · '), meeting: draft.meeting.trim() || 'EGM', closes: closes.toISOString() });
+    log({ who, role: 'Building Manager', action: 'Added', record: `Resolution "${draft.title.trim()}"` });
+    toast.success('Voting opened', 'Residents see it in the app now.');
+    setCreate(false); setDraft({ ...draft, title: '', note: '' });
+  };
+
   return (
     <div className="grid items-start gap-5 xl:grid-cols-2">
-      <Card className="flex flex-col gap-4 p-5">
-        <div className="flex items-start justify-between gap-3"><div><Chip tone="teal" dot>Open until 30 Sep</Chip><h2 className="mt-2 text-lg font-extrabold">Install 12 EV chargers at B1</h2><p className="sub mt-1">Special resolution · RM 86,000 from the sinking fund · EGM 2026/2</p></div><Vote className="h-6 w-6 text-muted" /></div>
-        {([['yes', 'For', '#14A38F'], ['no', 'Against', '#E5484D'], ['abstain', 'Abstain', '#9FB0DB']] as const).map(([k, l, c]) => (
-          <div key={k} className="flex flex-col gap-1.5">
-            <div className="flex justify-between text-[13px]"><span className="font-semibold">{l}</span><span className="font-bold">{votes[k]} · {Math.round((votes[k] / total) * 100)}%</span></div>
-            <Progress value={(votes[k] / total) * 100} color={c} label={l} />
-          </div>
-        ))}
-        <p className="text-xs text-muted">{total} of 612 parcels voted · {quorum}% turnout · one vote per unit, weighted by share units</p>
-        <div className="flex flex-wrap gap-2">
-          <Button icon={<Bell className="h-4 w-4" />} onClick={() => toast.success('Reminder sent', `${612 - total} units that have not voted.`)}>Remind non-voters</Button>
-          <Button variant="primary" onClick={() => setOpen(true)}>Record proxy vote</Button>
-        </div>
-      </Card>
+      <div className="flex flex-col gap-5">
+        <div className="flex justify-end"><Button variant="primary" icon={<Plus className="h-4 w-4" />} onClick={() => setCreate(true)}>New vote</Button></div>
+        {open.map((r) => {
+          const total = r.votes.yes + r.votes.no + r.votes.abstain;
+          const inApp = Object.values(r.voted).filter((v) => !v.proxy).length;
+          return (
+            <Card key={r.id} className="flex flex-col gap-4 p-5">
+              <div className="flex items-start justify-between gap-3"><div><Chip tone="teal" dot>Open until {new Date(r.closes).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</Chip><h2 className="mt-2 text-lg font-extrabold">{r.title}</h2><p className="sub mt-1">{r.detail} · {r.meeting}</p></div><Vote className="h-6 w-6 text-muted" /></div>
+              {([['yes', 'For', '#14A38F'], ['no', 'Against', '#E5484D'], ['abstain', 'Abstain', '#9FB0DB']] as const).map(([k, l, c]) => (
+                <div key={k} className="flex flex-col gap-1.5">
+                  <div className="flex justify-between text-[13px]"><span className="font-semibold">{l}</span><span className="font-bold">{r.votes[k]} · {total ? Math.round((r.votes[k] / total) * 100) : 0}%</span></div>
+                  <Progress value={total ? (r.votes[k] / total) * 100 : 0} color={c} label={l} />
+                </div>
+              ))}
+              <p className="text-xs text-muted">{total} of 612 parcels voted · {Math.round((total / 612) * 100)}% turnout · {inApp} voted in the app · {/special/i.test(r.detail) ? 'needs 75% for' : 'needs a simple majority'}</p>
+              <div className="flex flex-wrap gap-2">
+                <Button icon={<Bell className="h-4 w-4" />} onClick={() => toast.success('Reminder sent', `${612 - total} units that have not voted.`)}>Remind non-voters</Button>
+                <Button onClick={() => setProxyFor(r.id)}>Record proxy vote</Button>
+                <Button variant="primary" onClick={() => setClosing(r.id)}>Close voting</Button>
+              </div>
+            </Card>
+          );
+        })}
+        {!open.length && <Card><Empty icon={<Vote className="h-5 w-5" />} title="No open votes" body="Open a vote for the next AGM or EGM resolution." /></Card>}
+      </div>
       <Card className="flex flex-col gap-3 p-5">
         <h2 className="h2">Past resolutions</h2>
-        {[['Raise maintenance fee to RM 0.78 per sq ft', 'Passed · 71%', 'teal'], ['Ban short-term rentals (Airbnb)', 'Passed · 83%', 'teal'], ['Repaint Tower C facade', 'Not passed · 44%', 'red']].map(([t, r, tone]) => (
-          <div key={t} className="flex items-center justify-between gap-3 rounded-xl border border-line p-3"><span className="text-[13px] font-semibold">{t}</span><Chip tone={tone as ChipTone}>{r}</Chip></div>
-        ))}
+        {past.map((r) => {
+          const cast = r.votes.yes + r.votes.no;
+          return <div key={r.id} className="flex items-center justify-between gap-3 rounded-xl border border-line p-3"><span className="text-[13px] font-semibold">{r.title}<span className="block text-xs font-normal text-muted">{r.meeting}</span></span><Chip tone={r.status === 'passed' ? 'teal' : 'red'}>{r.status === 'passed' ? 'Passed' : 'Not passed'} · {cast ? Math.round((r.votes.yes / cast) * 100) : 0}%</Chip></div>;
+        })}
       </Card>
-      <Modal open={open} onClose={() => setOpen(false)} title="Record proxy vote" description="For owners who voted on paper at the management office."
-        footer={<Button onClick={() => setOpen(false)}>Cancel</Button>}>
-        <div className="grid grid-cols-3 gap-2">
-          {([['yes', 'For'], ['no', 'Against'], ['abstain', 'Abstain']] as const).map(([k, l]) => (
-            <Button key={k} variant={k === 'yes' ? 'teal' : k === 'no' ? 'danger' : 'secondary'} onClick={() => { setVotes((v) => ({ ...v, [k]: v[k] + 1 })); toast.success(`Proxy vote recorded: ${l}`); setOpen(false); }}>{l}</Button>
-          ))}
+      <Modal open={!!proxyFor} onClose={() => setProxyFor(null)} title="Record proxy vote" description="For owners who voted on paper or appointed a proxy at the management office."
+        footer={<Button onClick={() => setProxyFor(null)}>Cancel</Button>}>
+        <div className="flex flex-col gap-3">
+          <Field label="Unit">{(id) => <Input id={id} value={proxyUnit} onChange={(e) => setProxyUnit(e.target.value)} placeholder="B-12-05" className="font-mono uppercase" />}</Field>
+          <div className="grid grid-cols-3 gap-2">
+            {([['yes', 'For'], ['no', 'Against'], ['abstain', 'Abstain']] as const).map(([k, l]) => (
+              <Button key={k} variant={k === 'yes' ? 'teal' : k === 'no' ? 'danger' : 'secondary'} onClick={() => recordProxy(k)}>{l}</Button>
+            ))}
+          </div>
+        </div>
+      </Modal>
+      <Confirm open={!!closing} onClose={() => setClosing(null)} title="Close voting?" confirmLabel="Close and publish result"
+        body="Residents can no longer vote. The result is published to all residents."
+        onConfirm={() => {
+          const r = resolutions.find((x) => x.id === closing);
+          if (!r) return;
+          closeResolution(r.id);
+          log({ who, role: 'Building Manager', action: 'Closed', record: `Resolution "${r.title}"` });
+          toast.success(resolutionPasses(r) ? 'Resolution passed' : 'Resolution not passed', r.title);
+        }} />
+      <Modal open={create} onClose={() => setCreate(false)} title="New vote" description="Residents vote in the app. One vote per unit."
+        footer={<><Button onClick={() => setCreate(false)}>Cancel</Button><Button variant="primary" onClick={add}>Open voting</Button></>}>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field label="Resolution" className="sm:col-span-2">{(id) => <Input id={id} value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} placeholder="e.g. Upgrade the gym equipment" />}</Field>
+          <Field label="Type">{(id) => <Select id={id} value={draft.kind} onChange={(e) => setDraft({ ...draft, kind: e.target.value })}><option>Ordinary resolution</option><option>Special resolution</option><option>By-law amendment</option></Select>}</Field>
+          <Field label="Meeting">{(id) => <Input id={id} value={draft.meeting} onChange={(e) => setDraft({ ...draft, meeting: e.target.value })} />}</Field>
+          <Field label="Details (optional)">{(id) => <Input id={id} value={draft.note} onChange={(e) => setDraft({ ...draft, note: e.target.value })} placeholder="e.g. RM 40,000 from the sinking fund" />}</Field>
+          <Field label="Voting closes">{(id) => <Select id={id} value={draft.days} onChange={(e) => setDraft({ ...draft, days: e.target.value })}>{['7', '14', '21', '28'].map((d) => <option key={d} value={d}>In {d} days</option>)}</Select>}</Field>
         </div>
       </Modal>
     </div>

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Link, NavLink, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import {
   AlertTriangle, Bell, Building2, ChevronsUpDown, FileText, LayoutGrid, Lock, LogOut, Megaphone, Menu, Search, ShieldCheck, SlidersHorizontal,
-  Users, UserX, Car, ClipboardList, Ban, Video, Sparkles, Grid3X3, Check, CalendarDays,
+  Users, UserX, Car, ClipboardList, Ban, Video, Sparkles, Grid3X3, Check, CalendarDays, Settings as SettingsIcon,
 } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { PageOutlet } from '@/components/PageBoundary';
@@ -33,6 +33,7 @@ export const PORTAL_TITLES: Record<string, [string, string]> = {
   reports: ['Reports', 'Operations'],
   rules: ['Detection Rules', 'System'],
   privacy: ['Privacy & PDPA', 'System'],
+  settings: ['Site settings', 'System'],
 };
 
 function useNav() {
@@ -67,6 +68,7 @@ function useNav() {
       { label: 'System', items: [
         { to: '/portal/rules', label: 'Detection Rules', icon: SlidersHorizontal },
         { to: '/portal/privacy', label: 'Privacy & PDPA', icon: Lock },
+        { to: '/portal/settings', label: 'Site settings', icon: SettingsIcon },
       ] },
     ];
     return groups;

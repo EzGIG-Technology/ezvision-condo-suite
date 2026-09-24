@@ -233,6 +233,33 @@ export interface Booking {
   label?: string;
 }
 
+export interface SiteLimits {
+  /** Visitor passes a unit can create for one day. */
+  visitorsPerDay: number;
+  /** Visitors a unit can have on site at the same time. */
+  onSiteAtOnce: number;
+  /** Most guests on one event pass. */
+  eventGuestCap: number;
+  /** Longest multi-day pass, in days. */
+  multiDayMax: number;
+  /** Resident cars registered per unit. */
+  vehiclesPerUnit: number;
+}
+
+export type VoteChoice = 'yes' | 'no' | 'abstain';
+
+export interface Resolution {
+  id: string;
+  title: string;
+  detail: string;
+  meeting: string;
+  closes: string;
+  status: 'open' | 'passed' | 'not_passed';
+  votes: Record<VoteChoice, number>;
+  /** Units that voted in the app or by proxy, so each unit votes once. */
+  voted: Record<string, { choice: VoteChoice; by: string; proxy: boolean; at: string }>;
+}
+
 export interface Announcement {
   id: string;
   title: string;

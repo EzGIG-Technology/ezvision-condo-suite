@@ -20,6 +20,8 @@ export default function ResidentInvite() {
   useDocumentTitle('Invite a visitor');
   const resident = useStore((s) => s.resident);
   const createVisit = useStore((s) => s.createVisit);
+  const visits = useStore((s) => s.visits);
+  const limits = useStore((s) => s.limits);
   const navigate = useNavigate();
   const now = new Date();
   const [type, setType] = useState<VisitType>('guest');
@@ -32,12 +34,16 @@ export default function ResidentInvite() {
   const [plate, setPlate] = useState('');
   const [people, setPeople] = useState(1);
   const [recurring, setRecurring] = useState(false);
+  const [multi, setMulti] = useState(false);
+  const [endDate, setEndDate] = useState(() => { const d = new Date(); d.setDate(d.getDate() + 2); return toInputDate(d); });
   const [days, setDays] = useState([true, true, true, true, true, false, false]);
   const [note, setNote] = useState('');
   const [selfie, setSelfie] = useState(true);
   const [loading, setLoading] = useState(false);
 
   const canRecur = type === 'helper' || type === 'tutor' || type === 'driver';
+  const canMulti = type !== 'event' && !(canRecur && recurring);
+  const maxEnd = (() => { const d = new Date(`${date}T00:00`); d.setDate(d.getDate() + limits.multiDayMax); return toInputDate(d); })();
 
   const pickContact = () => {
     const c = CONTACTS[Math.floor(Math.random() * CONTACTS.length)];
@@ -50,10 +56,22 @@ export default function ResidentInvite() {
     if (!name.trim()) return toast.error("Enter your visitor's name");
     if (phone.replace(/\D/g, '').length < 9) return toast.error('Enter a valid mobile number', 'The pass is sent there by WhatsApp.');
     if (driving && !plate.trim()) return toast.error('Enter the car plate', 'So the barrier opens automatically.');
+    const isMulti = canMulti && multi;
     const vf = new Date(`${date}T${from}`);
-    const vt = new Date(`${date}T${to}`);
+    const vt = new Date(`${isMulti ? endDate : date}T${to}`);
+    if (isMulti && endDate <= date) return toast.error('Check the last day', 'A multi-day pass must end after the first day.');
+    if (isMulti && endDate > maxEnd) return toast.error(`Passes can run for up to ${limits.multiDayMax} days`, 'Set by the management office.');
     if (vt <= vf) vt.setDate(vt.getDate() + 1);
     if (vt < new Date()) return toast.error('That time has already passed');
+    // Limits set by management in Site settings.
+    const live = visits.filter((v) => v.unit === resident.unit && v.status !== 'cancelled' && v.status !== 'denied');
+    const sameDay = live.filter((v) => new Date(v.validFrom).toDateString() === vf.toDateString()).length;
+    if (sameDay >= limits.visitorsPerDay) return toast.error(`Up to ${limits.visitorsPerDay} visitor passes a day`, 'Your unit has reached the limit for that day. Cancel a pass or pick another day.');
+    if (type === 'event' && people > limits.eventGuestCap) return toast.error(`Events are limited to ${limits.eventGuestCap} guests`);
+    if (type !== 'event') {
+      const overlapping = live.filter((v) => v.type !== 'event' && (v.status === 'on_site' || v.status === 'expected') && new Date(v.validFrom) < vt && new Date(v.validTo) > vf).reduce((n, v) => n + v.people, 0);
+      if (overlapping + people > limits.onSiteAtOnce) return toast.error(`Up to ${limits.onSiteAtOnce} visitors at the same time`, `You already have ${overlapping} expected then.`);
+    }
     setLoading(true);
     const id = createVisit({
       name: name.trim(), phone, type, unit: resident.unit, host: resident.name, plate: driving ? plate.toUpperCase().trim() : undefined, status: 'expected',
@@ -83,11 +101,17 @@ export default function ResidentInvite() {
       </Card>
 
       <Card className="flex flex-col gap-3 p-4">
-        <Field label="Date">{(id) => <Input id={id} type="date" min={toInputDate(now)} value={date} onChange={(e) => setDate(e.target.value)} />}</Field>
+        <Field label={canMulti && multi ? 'First day' : 'Date'}>{(id) => <Input id={id} type="date" min={toInputDate(now)} value={date} onChange={(e) => setDate(e.target.value)} />}</Field>
         <div className="grid grid-cols-2 gap-3">
           <Field label="From">{(id) => <Input id={id} type="time" value={from} onChange={(e) => setFrom(e.target.value)} />}</Field>
           <Field label="Until">{(id) => <Input id={id} type="time" value={to} onChange={(e) => setTo(e.target.value)} />}</Field>
         </div>
+        {canMulti && (
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between"><span className="text-[13px] font-semibold">Staying more than one day</span><Switch checked={multi} onChange={setMulti} label="Staying more than one day" /></div>
+            {multi && <Field label="Last day" hint={`The pass expires automatically at the end time on this day. Up to ${limits.multiDayMax} days.`}>{(id) => <Input id={id} type="date" min={date} max={maxEnd} value={endDate} onChange={(e) => setEndDate(e.target.value)} />}</Field>}
+          </div>
+        )}
         {canRecur && (
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between"><span className="text-[13px] font-semibold">Repeats every week</span><Switch checked={recurring} onChange={setRecurring} label="Repeats every week" /></div>
@@ -96,7 +120,7 @@ export default function ResidentInvite() {
         )}
         {type === 'event' && (
           <div className="flex items-center justify-between"><span className="text-[13px] font-semibold">Number of guests</span>
-            <div className="flex items-center gap-2"><Button size="sm" aria-label="Fewer guests" icon={<Minus className="h-4 w-4" />} onClick={() => setPeople(Math.max(1, people - 1))} /><span className="w-8 text-center font-bold">{people}</span><Button size="sm" aria-label="More guests" icon={<Plus className="h-4 w-4" />} onClick={() => setPeople(Math.min(60, people + 1))} /></div>
+            <div className="flex items-center gap-2"><Button size="sm" aria-label="Fewer guests" icon={<Minus className="h-4 w-4" />} onClick={() => setPeople(Math.max(1, people - 1))} /><span className="w-8 text-center font-bold">{people}</span><Button size="sm" aria-label="More guests" icon={<Plus className="h-4 w-4" />} onClick={() => setPeople(Math.min(limits.eventGuestCap, people + 1))} /></div>
           </div>
         )}
       </Card>

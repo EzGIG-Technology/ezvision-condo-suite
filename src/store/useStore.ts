@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage, type StateStorage } from 'zustand/middleware';
 import { makeSeed, type Seed } from '@/data/seed';
 import type {
-  Alert, AlertStatus, Announcement, Approval, AuditEntry, Booking, Facility, LiftBooking, Parcel, Permit, ResidentNotice, Rule, Session, Ticket, UnitRecord, Visit, WatchEntry,
+  Alert, AlertStatus, Announcement, Approval, AuditEntry, Booking, Facility, LiftBooking, Parcel, Permit, Resolution, ResidentNotice, Rule, SiteLimits, VoteChoice, Session, Ticket, UnitRecord, Visit, WatchEntry,
 } from '@/data/types';
 import { code4, hhmm, uid } from '@/lib/utils';
 
@@ -83,6 +83,12 @@ type State = Seed & {
   // guardhouse messages
   sendMessage: (unit: string, from: 'resident' | 'guard', text: string) => void;
   markMessagesRead: (unit: string, reader: 'resident' | 'guard') => void;
+  // settings
+  setLimits: (patch: Partial<SiteLimits>) => void;
+  // e-voting
+  createResolution: (r: Pick<Resolution, 'title' | 'detail' | 'meeting' | 'closes'>) => string;
+  castVote: (id: string, unit: string, choice: VoteChoice, by: string, proxy: boolean) => boolean;
+  closeResolution: (id: string) => void;
   // community
   sendAnnouncement: (a: Omit<Announcement, 'id' | 'sentAt'>) => void;
   setTicketState: (id: string, state: Ticket['state']) => void;
@@ -111,6 +117,12 @@ type State = Seed & {
 };
 
 const now = () => new Date().toISOString();
+
+/** A special resolution needs 75% of the votes cast for or against; an ordinary one needs a simple majority. */
+export const resolutionPasses = (r: Pick<Resolution, 'detail' | 'votes'>) => {
+  const cast = r.votes.yes + r.votes.no;
+  return cast > 0 && (/special/i.test(r.detail) ? r.votes.yes / cast >= 0.75 : r.votes.yes > r.votes.no);
+};
 
 let refCounter = 15;
 const nextRef = () => `INC-0923-${String(refCounter++).padStart(3, '0')}`;
@@ -325,6 +337,22 @@ export const useStore = create<State>()(
         set({ liftBookings: get().liftBookings.map((x) => (x.id === id ? { ...x, depositPaid: true } : x)) });
         if (b.deposit) set({ bills: [{ id: uid('b'), unit: b.unit, label: `${b.what} damage deposit (refundable)`, amount: b.deposit, status: 'paid', paidAt: `Today ${hhmm(now())}`, method: 'FPX', lines: [] }, ...get().bills] });
       },
+
+      setLimits: (patch) => set({ limits: { ...get().limits, ...patch } }),
+
+      createResolution: (r) => {
+        const id = uid('rs');
+        set({ resolutions: [{ ...r, id, status: 'open', votes: { yes: 0, no: 0, abstain: 0 }, voted: {} }, ...get().resolutions] });
+        return id;
+      },
+      castVote: (id, unit, choice, by, proxy) => {
+        const r = get().resolutions.find((x) => x.id === id);
+        if (!r || r.status !== 'open' || r.voted[unit]) return false;
+        set({ resolutions: get().resolutions.map((x) => (x.id === id ? { ...x, votes: { ...x.votes, [choice]: x.votes[choice] + 1 }, voted: { ...x.voted, [unit]: { choice, by, proxy, at: now() } } } : x)) });
+        return true;
+      },
+      closeResolution: (id) =>
+        set({ resolutions: get().resolutions.map((x) => (x.id === id ? { ...x, status: resolutionPasses(x) ? 'passed' : 'not_passed', closes: now() } : x)) }),
 
       sendMessage: (unit, from, text) => {
         set({ messages: [...get().messages, { id: uid('gm'), unit, from, text, at: now(), read: false }] });
