@@ -61,6 +61,7 @@ export default function Launcher() {
           <div><p className="font-bold text-navy">Resident sign-in</p><p>Mobile 012-345 6789, then any 6-digit code.</p></div>
         </section>
         <p className="mt-6 text-center text-xs text-muted">Sample data only. Names, plates and units are fictional. Camera views and faces are illustrations, not real footage.</p>
+        <p className="mt-6 text-center text-xs text-muted">Version {__BUILD__}</p>
       </main>
       <Confirm open={confirm} onClose={() => setConfirm(false)} title="Reset demo data?" body="All visits, alerts, parcels and settings go back to the starting scenario. Sign-ins are kept." confirmLabel="Reset" danger
         onConfirm={() => { reset(); toast.success('Demo data reset'); }} />
