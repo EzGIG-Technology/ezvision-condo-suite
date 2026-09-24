@@ -66,7 +66,7 @@ export default function GuardMessages() {
           <section className="flex flex-col gap-3 rounded-2xl border border-night-line bg-night-panel p-4" aria-label={`Conversation with ${active}`}>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div><p className="font-mono text-lg font-bold">{active}</p><p className="text-xs text-muted-light">{resident?.name ?? 'Resident'}</p></div>
-              <Button variant="night" icon={<Phone className="h-4 w-4" />} onClick={() => toast.info(`Calling ${active}`, 'The resident app rings. In-app call, no intercom hardware needed.')}>Call unit</Button>
+              <Button variant="night" icon={<Phone className="h-4 w-4" />} onClick={() => { if (active) { useStore.getState().startCall(active, 'Guardhouse'); toast.info(`Calling ${active}`, 'The resident app rings. No intercom hardware needed.'); } }}>Call unit</Button>
             </div>
             <ol className="flex flex-col gap-2">
               {thread.map((m, i) => (

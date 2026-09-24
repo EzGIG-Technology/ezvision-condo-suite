@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { CamFeed, FaceCrop } from '@/components/vision';
 import { cn, hhmm, when } from '@/lib/utils';
 import { toast } from '@/store/toast';
+import type { Scene, Sighting } from '@/data/types';
 
 const SUGGESTIONS = ['red Myvi, yesterday 8 to 10pm, main gate', 'person in dark hoodie, perimeter, tonight', 'all side gate entries this week', 'plate WXY 8812'];
 const COLOURS = ['red', 'white', 'black', 'silver', 'grey', 'blue', 'maroon'];
@@ -35,6 +36,40 @@ function understand(q: string) {
   if (yesterday) chips.push('Yesterday'); else if (/tonight|today/.test(s)) chips.push('Today'); else if (/week/.test(s)) chips.push('Last 7 days');
   if (place) chips.push(`${place} cameras`);
   return { chips, colour, model, plate: plate && /\d/.test(plate) ? plate.replace(/\s+/g, ' ') : undefined, person, vehicle, yesterday, place };
+}
+
+/** Where each scene sits on the site plan below (viewBox 322 × 170). */
+const SCENE_XY: Record<Scene, [number, number]> = {
+  gate: [161, 152], guardpost: [132, 152], lobby: [70, 72], corridor: [250, 72], carpark: [165, 114], pool: [42, 132], bin: [292, 138], fence: [300, 16], sidegate: [14, 96],
+};
+
+/** Unified map timeline: every sighting of one person on the site plan, numbered in time order. */
+function SightingMap({ sightings }: { sightings: Sighting[] }) {
+  const list = [...sightings].sort((a, b) => +new Date(a.at) - +new Date(b.at));
+  const pts = list.map((s, i) => { const [x, y] = SCENE_XY[s.scene] ?? [161, 85]; return [x + (i % 3) * 6, y - (i % 2) * 6] as const; });
+  return (
+    <>
+      <svg viewBox="0 0 322 170" className="h-auto w-full" role="img" aria-label={`Map of ${list.length} sightings in time order`}>
+        <rect x="1" y="1" width="320" height="168" rx="12" fill="#F7F9FD" stroke="#E3E9F4" />
+        <rect x="30" y="22" width="80" height="46" rx="8" fill="#E8EEFF" /><text x="70" y="50" fontSize="11" fontWeight="700" textAnchor="middle" fill="#1D3FB0">Tower A</text>
+        <rect x="210" y="22" width="80" height="46" rx="8" fill="#E8EEFF" /><text x="250" y="50" fontSize="11" fontWeight="700" textAnchor="middle" fill="#1D3FB0">Tower B</text>
+        <rect x="120" y="96" width="90" height="36" rx="8" fill="#EEF1F7" /><text x="165" y="118" fontSize="11" fontWeight="700" textAnchor="middle" fill="#3A4468">Carpark</text>
+        <text x="176" y="163" fontSize="10" fontWeight="700" fill="#0B1640">Main gate</text>
+        {pts.length > 1 && <polyline points={pts.map(([x, y]) => `${x},${y}`).join(' ')} fill="none" stroke="#E5484D" strokeWidth="2.5" strokeLinecap="round" strokeDasharray="1 6" />}
+        {pts.map(([x, y], i) => (
+          <g key={i}><circle cx={x} cy={y} r="8" fill="#E5484D" stroke="#fff" strokeWidth="2" /><text x={x} y={y + 3.5} fontSize="9.5" fontWeight="800" textAnchor="middle" fill="#fff">{i + 1}</text></g>
+        ))}
+      </svg>
+      <ol className="flex flex-col">
+        {list.map((s, i) => (
+          <li key={i} className="flex items-center gap-2.5 border-t border-line-soft py-1.5 text-[12.5px]">
+            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-danger-dot text-[10.5px] font-extrabold text-white">{i + 1}</span>
+            <span className="flex-1 font-semibold">{s.camera}</span><span className="font-mono text-muted">{when(s.at)}</span>
+          </li>
+        ))}
+      </ol>
+    </>
+  );
 }
 
 export default function Search() {
@@ -185,9 +220,7 @@ export default function Search() {
             <>
               <CardHeader title="Person sightings" sub={focusRes.note} />
               <FaceCrop variant={focusRes.variant} className="w-32" />
-              {faces.find((f) => f.id === focusRes.faceId)?.sightings.map((s, i) => (
-                <div key={i} className="flex items-center gap-2.5 border-t border-line-soft py-1.5 text-[12.5px]"><span className="flex-1 font-semibold">{s.camera}</span><span className="font-mono text-muted">{when(s.at)}</span></div>
-              ))}
+              <SightingMap sightings={faces.find((f) => f.id === focusRes.faceId)?.sightings ?? []} />
               <Button onClick={() => navigate('/portal/unregistered')}>Open in Unregistered Gallery</Button>
             </>
           ) : <Empty title="Pick a result" body="Its journey across cameras shows here." />}

@@ -64,7 +64,7 @@ export default function ResidentUnit() {
       <Card className="p-4">
         <div className="mb-2 flex items-center justify-between"><h2 className="h2">Cars</h2><Button size="sm" variant="ghost" icon={<Plus className="h-4 w-4" />} onClick={() => setCar(true)}>Add</Button></div>
         {u.vehicles.map((v) => (
-          <div key={v.plate} className="flex items-center gap-3 py-2"><Car className="h-5 w-5 text-muted" /><div className="flex-1"><Plate>{v.plate}</Plate><p className="mt-0.5 text-xs text-muted">{v.model}</p></div><button type="button" onClick={() => { updateUnit(u.unit, { vehicles: u.vehicles.filter((x) => x.plate !== v.plate) }); toast.info(`${v.plate} removed`); }} className="text-xs font-semibold text-muted hover:text-danger">Remove</button></div>
+          <div key={v.plate} className="flex items-center gap-3 py-2"><Car className="h-5 w-5 text-muted" /><div className="flex-1"><Plate>{v.plate}</Plate><p className="mt-0.5 text-xs text-muted">{v.model}{v.tag ? ` · UHF tag ${v.tag}` : ''}</p></div><button type="button" onClick={() => { updateUnit(u.unit, { vehicles: u.vehicles.filter((x) => x.plate !== v.plate) }); toast.info(`${v.plate} removed`); }} className="text-xs font-semibold text-muted hover:text-danger">Remove</button></div>
         ))}
         <p className="mt-1 text-xs text-muted">Parking bays {u.bays}</p>
       </Card>

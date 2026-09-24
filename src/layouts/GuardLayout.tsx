@@ -6,7 +6,7 @@ import { PageOutlet } from '@/components/PageBoundary';
 import { Logo } from '@/components/vision';
 import { Avatar } from '@/components/ui';
 import { cn, hhmm } from '@/lib/utils';
-import { useNow, useOnline } from '@/lib/hooks';
+import { useCallTimeout, useNow, useOnline } from '@/lib/hooks';
 import { toast } from '@/store/toast';
 
 const NAV = [
@@ -34,6 +34,19 @@ export default function GuardLayout() {
   const seenMsg = useRef<Set<string>>(new Set(messages.map((m) => m.id)));
   const unreadMsgs = messages.filter((m) => m.from === 'resident' && !m.read).length;
   const online = useOnline();
+  const call = useStore((s) => s.call);
+  useCallTimeout('Guardhouse');
+
+  // Tell the guard how a call from the tablet went.
+  const callState = call?.from === 'Guardhouse' ? `${call.id}:${call.state}:${call.outcome ?? ''}` : '';
+  useEffect(() => {
+    if (!call || call.from !== 'Guardhouse') return;
+    if (call.state === 'answered') toast.success(`${call.unit} answered`, 'You are connected.');
+    if (call.state === 'ended') {
+      if (call.outcome === 'declined') toast.warning(`${call.unit} declined the call`);
+      if (call.outcome === 'missed') toast.warning(`No answer from ${call.unit}`, 'Try their phone, or send a message.');
+    }
+  }, [callState]);
   const [queued, setQueued] = useState(0);
   const pendingSync = useRef(0);
   const wasOffline = useRef(false);

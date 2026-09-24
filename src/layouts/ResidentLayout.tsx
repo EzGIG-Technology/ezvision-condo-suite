@@ -3,6 +3,7 @@ import { Link, NavLink, Navigate, useLocation, useNavigate } from 'react-router-
 import { ArrowLeft, Bell, CalendarDays, Home, Plus, UserRound, Users } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { PageOutlet } from '@/components/PageBoundary';
+import { IncomingCall } from '@/components/IncomingCall';
 import { Logo, FaceCrop } from '@/components/vision';
 import { cn } from '@/lib/utils';
 import { toast } from '@/store/toast';
@@ -87,6 +88,7 @@ export default function ResidentLayout() {
           ))}
         </nav>
       </div>
+      <IncomingCall unit={unit} />
     </div>
   );
 }

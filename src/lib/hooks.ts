@@ -1,3 +1,4 @@
+import { useStore } from '@/store/useStore';
 import { useEffect, useState } from 'react';
 
 export function useNow(intervalMs = 1000) {
@@ -39,4 +40,15 @@ export function useOnline() {
     return () => { window.removeEventListener('online', up); window.removeEventListener('offline', down); };
   }, []);
   return online;
+}
+
+/** Marks a ringing intercom call from `from` as missed after 30 seconds without an answer. */
+export function useCallTimeout(from: string) {
+  const call = useStore((s) => s.call);
+  const ringing = call && call.from === from && call.state === 'ringing' ? call.id : null;
+  useEffect(() => {
+    if (!ringing) return;
+    const t = window.setTimeout(() => { const c = useStore.getState().call; if (c?.id === ringing && c.state === 'ringing') useStore.getState().endCall('missed'); }, 30_000);
+    return () => window.clearTimeout(t);
+  }, [ringing]);
 }

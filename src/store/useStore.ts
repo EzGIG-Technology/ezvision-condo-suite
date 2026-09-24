@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage, type StateStorage } from 'zustand/middleware';
 import { makeSeed, type Seed } from '@/data/seed';
 import type {
-  Alert, AlertStatus, Announcement, Approval, AuditEntry, Booking, Facility, LiftBooking, Parcel, Permit, Resolution, ResidentNotice, Rule, SiteLimits, VoteChoice, Session, Ticket, UnitRecord, Visit, WatchEntry,
+  Alert, AlertStatus, Announcement, Approval, AuditEntry, Booking, Facility, IntercomCall, LiftBooking, Parcel, Permit, Resolution, ResidentNotice, Rule, SiteLimits, VoteChoice, Session, Ticket, UnitRecord, Visit, WatchEntry,
 } from '@/data/types';
 import { code4, hhmm, uid } from '@/lib/utils';
 import { approvesWatchlist, PORTAL_ROLES } from '@/lib/roles';
@@ -84,6 +84,10 @@ type State = Seed & {
   setLiftStatus: (id: string, status: NonNullable<LiftBooking['status']>) => void;
   setLiftChecklist: (id: string, key: 'pre' | 'post', v: boolean) => void;
   payLiftDeposit: (id: string) => void;
+  // video intercom
+  startCall: (unit: string, from: string) => void;
+  answerCall: () => void;
+  endCall: (outcome: NonNullable<IntercomCall['outcome']>) => void;
   // guardhouse messages
   sendMessage: (unit: string, from: 'resident' | 'guard', text: string) => void;
   markMessagesRead: (unit: string, reader: 'resident' | 'guard') => void;
@@ -281,7 +285,7 @@ export const useStore = create<State>()(
         const parcel: Parcel = { ...p, id: uid('p'), loggedAt: now(), status: 'waiting', code: code4() };
         set({ parcels: [parcel, ...get().parcels] });
         if (p.unit === get().resident.unit) {
-          get().addNotice({ unit: p.unit, title: 'Parcel waiting', body: `${p.courier} parcel on shelf ${p.shelf}. Pickup code ${parcel.code}.`, kind: 'parcel', link: '/app/parcels' });
+          get().addNotice({ unit: p.unit, title: 'Parcel waiting', body: p.locker ? `${p.courier} parcel in smart locker ${p.locker}. Open it any time with code ${parcel.code}.` : `${p.courier} parcel on shelf ${p.shelf}. Pickup code ${parcel.code}.`, kind: 'parcel', link: '/app/parcels' });
         }
         return parcel;
       },
@@ -391,6 +395,16 @@ export const useStore = create<State>()(
       },
       closeResolution: (id) =>
         set({ resolutions: get().resolutions.map((x) => (x.id === id ? { ...x, status: resolutionPasses(x) ? 'passed' : 'not_passed', closes: now() } : x)) }),
+
+      startCall: (unit, from) => set({ call: { id: uid('call'), unit, from, at: now(), state: 'ringing' } }),
+      answerCall: () => { const c = get().call; if (c?.state === 'ringing') set({ call: { ...c, state: 'answered' } }); },
+      endCall: (outcome) => {
+        const c = get().call;
+        if (!c || c.state === 'ended') return;
+        set({ call: { ...c, state: 'ended', outcome } });
+        if (outcome === 'missed') get().addNotice({ unit: c.unit, title: `Missed call from ${c.from}`, body: 'Message the guardhouse if you are expecting someone.', kind: 'visitor', link: '/app/guardhouse' });
+        if (outcome === 'door_opened') get().log({ who: c.unit, role: 'Resident', action: 'Changed', record: `Opened the lobby door from the intercom (${c.from})` });
+      },
 
       sendMessage: (unit, from, text) => {
         set({ messages: [...get().messages, { id: uid('gm'), unit, from, text, at: now(), read: false }] });

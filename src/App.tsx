@@ -24,6 +24,7 @@ const Reports = lazy(() => import('@/pages/portal/Reports'));
 const Rules = lazy(() => import('@/pages/portal/Rules'));
 const Privacy = lazy(() => import('@/pages/portal/Privacy'));
 const Settings = lazy(() => import('@/pages/portal/Settings'));
+const Integrations = lazy(() => import('@/pages/portal/Integrations'));
 
 const GuardLayout = lazy(() => import('@/layouts/GuardLayout'));
 const GuardLogin = lazy(() => import('@/pages/guard/GuardLogin'));
@@ -60,6 +61,7 @@ const ResVote = lazy(() => import('@/pages/resident/Vote'));
 const VisitorPass = lazy(() => import('@/pages/visitor/VisitorPass'));
 const VisitorSelfie = lazy(() => import('@/pages/visitor/VisitorSelfie'));
 const CourierPass = lazy(() => import('@/pages/visitor/CourierPass'));
+const LobbyPanel = lazy(() => import('@/pages/visitor/LobbyPanel'));
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -97,6 +99,7 @@ export default function App() {
               <Route path="rules" element={<Rules />} />
               <Route path="privacy" element={<Privacy />} />
               <Route path="settings" element={<Settings />} />
+              <Route path="integrations" element={<Integrations />} />
               <Route path="*" element={<Navigate to="dashboard" replace />} />
             </Route>
 
@@ -140,6 +143,7 @@ export default function App() {
             <Route path="/v/:id" element={<VisitorPass />} />
             <Route path="/v/:id/selfie" element={<VisitorSelfie />} />
             <Route path="/d/:code" element={<CourierPass />} />
+            <Route path="/panel" element={<LobbyPanel />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>

@@ -1,6 +1,6 @@
 import { ago } from '@/lib/utils';
 import type {
-  Alert, Approval, Announcement, AuditEntry, Bill, Booking, Checkpoint, Facility, DataRequest, Guard, GuardMessage, LiftBooking, Parcel, Permit, Resolution, SiteLimits,
+  Alert, Approval, Announcement, AuditEntry, Bill, Booking, Checkpoint, Facility, DataRequest, Guard, GuardMessage, IntercomCall, LiftBooking, Parcel, Permit, Resolution, SiteLimits,
   ResidentNotice, Retention, Rule, Ticket, UnitRecord, UnknownFace, UnknownPlate, Visit, WatchEntry,
 } from './types';
 
@@ -377,7 +377,7 @@ export function makeSeed() {
   const units: UnitRecord[] = [
     { unit: 'A-15-07', tower: 'A', name: 'Tan Mei Ling (tenant)', meta: '4 people · 2 cars', tag: 'Tenant', size: 1180, beds: 3, owner: 'Dr Lim Chee Keong', since: '1 Mar 2025', tenancyEnds: '28 Feb 2027', bays: 'B2-118, B2-119', feesOk: true,
       household: [{ name: 'Tan Mei Ling', role: 'Primary tenant', app: true, face: false }, { name: 'Ong Kah Wai', role: 'Spouse', app: true, face: false }, { name: 'Ong Jun Hao', role: 'Son', app: false, face: false }, { name: 'Sri Rahayu', role: 'Helper · recurring pass', app: false, face: true }],
-      vehicles: [{ plate: 'VBK 2231', model: 'Honda HR-V · white' }, { plate: 'WQE 4812', model: 'Perodua Ativa · grey' }],
+      vehicles: [{ plate: 'VBK 2231', model: 'Honda HR-V · white', tag: 'UHF-418207' }, { plate: 'WQE 4812', model: 'Perodua Ativa · grey' }],
       cards: [{ id: '0048-2291', holder: 'Tan Mei Ling', active: true }, { id: '0048-2292', holder: 'Ong Kah Wai', active: true }, { id: '0048-1170', holder: 'Reported lost', active: false, note: 'Blocked 12 Sep' }] },
     { unit: 'A-15-06', tower: 'A', name: 'Hj. Kamarul Ariffin', meta: '3 people · 1 car', tag: 'Owner', size: 1180, beds: 3, owner: 'Hj. Kamarul Ariffin', since: '2019', bays: 'B2-116', feesOk: true,
       household: [{ name: 'Hj. Kamarul Ariffin', role: 'Owner', app: true, face: true }, { name: 'Pn. Rohani', role: 'Spouse', app: true, face: true }, { name: 'Aisyah', role: 'Daughter', app: true, face: false }],
@@ -402,7 +402,7 @@ export function makeSeed() {
 
   return {
     alerts, visits, approvals, parcels, unknownFaces, unknownPlates, watchlist, permits, liftBookings, facilities, bookings, announcements, rules, notices, bills,
-    checkpoints, guards, tickets, messages, limits, resolutions, dataRequests, audit, retention, units,
+    checkpoints, guards, tickets, messages, limits, call: null as IntercomCall | null, resolutions, dataRequests, audit, retention, units,
     patrolStartedAt: ago(21),
     nightMode: true,
     feeRestriction: true,

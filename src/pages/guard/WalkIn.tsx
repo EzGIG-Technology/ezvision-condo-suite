@@ -185,7 +185,7 @@ export default function GuardWalkIn() {
               <p className="text-sm text-muted-light">{approval.visitorName} · {approval.purpose}{approval.plate ? ` · ${approval.plate}` : ''} · sent {relative(approval.createdAt)}</p>
             </div>
             <div className="grid gap-2 sm:grid-cols-2">
-              <Button size="lg" variant="night" icon={<Phone className="h-4 w-4" />} onClick={() => toast.info(`Calling ${approval.unit}`, 'Intercom ringing…')}>Call the unit</Button>
+              <Button size="lg" variant="night" icon={<Phone className="h-4 w-4" />} onClick={() => { useStore.getState().startCall(approval.unit, 'Guardhouse'); toast.info(`Calling ${approval.unit}`, 'The resident app rings.'); }}>Call the unit</Button>
               <a href={`/app/approval/${approval.id}`} target="_blank" rel="noreferrer" className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-navy-500 bg-navy-700 px-5 text-[15px] font-semibold hover:bg-[#1c2b6b]"><ExternalLink className="h-4 w-4" />Open resident app</a>
             </div>
             <div className="grid gap-2 border-t border-night-line pt-4 sm:grid-cols-2">

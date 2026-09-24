@@ -91,6 +91,8 @@ export interface Parcel {
   code: string;
   collectedAt?: string;
   collectedBy?: string;
+  /** Smart locker number when the parcel is in a locker instead of on a shelf. */
+  locker?: string;
 }
 
 export interface Sighting {
@@ -190,6 +192,16 @@ export interface LiftBooking {
   /** Pre- and post-move inspection of the lift and common areas. */
   checklist?: { pre: boolean; post: boolean };
   visitId?: string;
+}
+
+export interface IntercomCall {
+  id: string;
+  unit: string;
+  /** Who is calling, e.g. 'Tower A lobby panel' or 'Guardhouse'. */
+  from: string;
+  at: string;
+  state: 'ringing' | 'answered' | 'ended';
+  outcome?: 'door_opened' | 'declined' | 'missed' | 'talked';
 }
 
 export interface GuardMessage {
@@ -406,7 +418,8 @@ export interface UnitRecord {
   bays: string;
   feesOk: boolean;
   household: { name: string; role: string; app: boolean; face: boolean }[];
-  vehicles: { plate: string; model: string }[];
+  /** `tag` is the UHF/RFID windscreen tag, a backup to plate recognition for dirty or damaged plates. */
+  vehicles: { plate: string; model: string; tag?: string }[];
   cards: { id: string; holder: string; active: boolean; note?: string }[];
 }
 

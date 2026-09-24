@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, Monitor, RotateCcw, Smartphone, Tablet, Ticket } from 'lucide-react';
+import { ArrowRight, Monitor, MonitorSmartphone, RotateCcw, Smartphone, Tablet, Ticket } from 'lucide-react';
 import { Logo, CamFeed } from '@/components/vision';
 import { useStore } from '@/store/useStore';
 import { toast } from '@/store/toast';
@@ -12,6 +12,7 @@ const surfaces = [
   { to: '/guard', icon: Tablet, title: 'Guard Tablet', who: 'Guards at the guardhouse and on patrol', body: 'Gate console, alert takeover with AI talk-down, walk-in registration with ID and face check, QR verification, parcels, patrol and handover.', tone: 'bg-navy text-white' },
   { to: '/app', icon: Smartphone, title: 'Resident App', who: 'Owners, tenants and household', body: 'Invite visitors, approve walk-ins, parcels, facility booking, SOS, face access, renovation permits and fees.', tone: 'bg-teal text-white' },
   { to: '/v/v-10', icon: Ticket, title: 'Visitor & Courier Pass', who: 'Guests, riders and couriers, no app needed', body: 'The pass page a visitor gets on WhatsApp, optional selfie for lobby entry, and the one-time courier code.', tone: 'bg-warn-soft text-warn-ink' },
+  { to: '/panel', icon: MonitorSmartphone, title: 'Lobby Intercom Panel', who: 'Visitors at a tower lobby door', body: 'Key in a unit number to video-call the resident app. The resident answers on their phone and opens the lobby door.', tone: 'bg-grape-soft text-grape-ink' },
 ];
 
 export default function Launcher() {

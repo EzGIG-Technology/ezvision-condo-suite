@@ -1,7 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Bell, CalendarPlus, Camera, Megaphone, Package, Plus, Send, Settings2, Vote, Wallet, Wrench, X } from 'lucide-react';
+import { Bell, CalendarPlus, Camera, Download, Megaphone, Package, Plus, Send, Settings2, Vote, Wallet, Wrench, X } from 'lucide-react';
 import { resolutionPasses, useStore } from '@/store/useStore';
+import { strataAccounts } from '@/lib/accounts';
+import { exportReport } from '@/lib/export';
+import { REPORTS } from '@/lib/reports';
 import { Card, CardHeader, Checkbox, Chip, Confirm, Empty, Field, Input, Modal, Progress, Segmented, Select, Switch, Textarea, type ChipTone } from '@/components/ui';
 import { Button, LinkButton } from '@/components/ui/Button';
 import { cn, relative, rm, when } from '@/lib/utils';
@@ -209,6 +212,12 @@ function Tickets() {
 
 function Fees() {
   const restriction = useStore((s) => s.feeRestriction);
+  const bookings = useStore((s) => s.bookings);
+  const resolutions = useStore((s) => s.resolutions);
+  const liftBookings = useStore((s) => s.liftBookings);
+  const permits = useStore((s) => s.permits);
+  // Recomputed when bookings, votes, moves or permits change the balances.
+  const acc = useMemo(() => strataAccounts(useStore.getState()), [bookings, resolutions, liftBookings, permits]);
   const units = useStore((s) => s.units);
   const setRestriction = useStore((s) => s.setFeeRestriction);
   const arrears = units.filter((u) => !u.feesOk);
@@ -238,10 +247,23 @@ function Fees() {
       </Card>
       <div className="flex flex-col gap-5">
         <Card className="flex flex-col gap-3 p-4">
-          <h2 className="h2">Collection, Q3 2026</h2>
-          <p className="text-[28px] font-extrabold tracking-tight">92.4%</p>
-          <Progress value={92.4} color="#14A38F" label="Collection rate" />
-          <p className="text-xs text-muted">{rm(1_883_000)} of {rm(2_038_000)} collected · 41% by auto-debit</p>
+          <h2 className="h2">Collection, {acc.quarter}</h2>
+          <p className="text-[28px] font-extrabold tracking-tight">{(acc.collectionRate * 100).toFixed(1)}%</p>
+          <Progress value={acc.collectionRate * 100} color="#14A38F" label="Collection rate" />
+          <p className="text-xs text-muted">{rm(acc.collected.maintenance + acc.collected.sinking)} of {rm(acc.billed.maintenance + acc.billed.sinking)} collected · 41% by auto-debit</p>
+        </Card>
+        <Card className="flex flex-col gap-3 p-4">
+          <CardHeader title="Strata accounts" sub={`${acc.quarter} · sinking fund is 10% of charges`} />
+          <dl className="grid grid-cols-2 gap-2 text-[13px]">
+            <div className="rounded-xl bg-ice p-3"><dt className="text-xs text-muted">Maintenance fund</dt><dd className="text-lg font-extrabold">{rm(acc.balance.maintenance)}</dd></div>
+            <div className="rounded-xl bg-ice p-3"><dt className="text-xs text-muted">Sinking fund</dt><dd className="text-lg font-extrabold">{rm(acc.balance.sinking)}</dd></div>
+            <div className="rounded-xl bg-ice p-3"><dt className="text-xs text-muted">Spent this quarter</dt><dd className="font-bold">{rm(acc.spent)}</dd></div>
+            <div className="rounded-xl bg-ice p-3"><dt className="text-xs text-muted">Deposits held</dt><dd className="font-bold">{rm(acc.depositsHeld)}</dd></div>
+          </dl>
+          {acc.sinkingCommitted > 0 && <p className="text-xs text-muted-dark">{rm(acc.sinkingCommitted)} of the sinking fund is committed to the EV chargers passed at EGM 2026/2.</p>}
+          <div className="flex gap-2">
+            {(['PDF', 'Excel'] as const).map((f) => <Button key={f} size="sm" icon={<Download className="h-4 w-4" />} onClick={async () => { const def = REPORTS.find((r) => r.name === 'Strata accounts'); if (def) { await exportReport({ title: 'Strata accounts', ...def.build(useStore.getState()) }, f); toast.success('Statement downloaded', f); } }}>Statement ({f})</Button>)}
+          </div>
         </Card>
         <Card className="flex flex-col gap-3 p-4">
           <div className="flex items-start justify-between gap-3">

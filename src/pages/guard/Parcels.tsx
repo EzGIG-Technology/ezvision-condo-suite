@@ -24,12 +24,15 @@ export default function GuardParcels() {
   const [size, setSize] = useState<Parcel['size']>('Small');
   const [tracking, setTracking] = useState('');
   const [shelf, setShelf] = useState('A-1');
+  const [store, setStore] = useState<'shelf' | 'locker'>('shelf');
   const [last, setLast] = useState<Parcel | null>(null);
   const [code, setCode] = useState('');
   const [q, setQ] = useState('');
   const [match, setMatch] = useState<string | null>(null);
 
   const waiting = parcels.filter((p) => p.status === 'waiting');
+  const LOCKERS = Array.from({ length: 24 }, (_, i) => `L-${String(i + 1).padStart(2, '0')}`);
+  const freeLocker = LOCKERS.find((l) => !waiting.some((p) => p.locker === l));
   const matched = parcels.find((p) => p.id === match);
   const filtered = waiting.filter((p) => !q || `${p.unit} ${p.recipient}`.toLowerCase().includes(q.toLowerCase()));
 
@@ -42,9 +45,11 @@ export default function GuardParcels() {
   const submit = (e: FormEvent) => {
     e.preventDefault();
     if (!/^[ABC]-\d{2}-\d{1,2}$/i.test(unit.trim())) return toast.error('Check the unit number', 'Format: A-15-07');
-    const p = logParcel({ unit: unit.toUpperCase().trim(), recipient: recipient || 'Resident', courier, size: size, tracking: tracking || `MANUAL-${Date.now().toString().slice(-6)}`, shelf: size === 'Chilled' ? 'F-1' : shelf, loggedBy: guard.name });
+    const inLocker = store === 'locker' && size !== 'Chilled';
+    if (inLocker && !freeLocker) return toast.error('All 24 lockers are full', 'Put this parcel on a shelf.');
+    const p = logParcel({ unit: unit.toUpperCase().trim(), recipient: recipient || 'Resident', courier, size: size, tracking: tracking || `MANUAL-${Date.now().toString().slice(-6)}`, shelf: size === 'Chilled' ? 'F-1' : inLocker ? `Locker ${freeLocker}` : shelf, locker: inLocker ? freeLocker : undefined, loggedBy: guard.name });
     setLast(p);
-    toast.success(`Parcel logged for ${p.unit}`, `Pickup code ${p.code}. The resident was notified.`);
+    toast.success(`Parcel logged for ${p.unit}`, inLocker ? `In smart locker ${freeLocker}. The resident can collect it any time with code ${p.code}.` : `Pickup code ${p.code}. The resident was notified.`);
     setUnit(''); setRecipient(''); setTracking('');
   };
 
@@ -82,7 +87,10 @@ export default function GuardParcels() {
             <div className="flex flex-col gap-1.5"><span className="text-xs font-bold text-muted-light">Size</span>
               <div className="grid grid-cols-4 gap-2">{SIZES.map((s) => <button key={s} type="button" aria-pressed={size === s} onClick={() => setSize(s)} className={cn('h-12 rounded-xl border text-[14px] font-semibold', size === s ? 'border-brand bg-brand/20' : 'border-navy-500 bg-night-field hover:bg-navy-700')}>{s}</button>)}</div>
             </div>
-            <label className="flex flex-col gap-1.5 text-xs font-bold text-muted-light">Shelf<Select dark value={size === 'Chilled' ? 'F-1' : shelf} disabled={size === 'Chilled'} onChange={(e) => setShelf(e.target.value)}>{['A', 'B', 'C', 'D', 'E'].flatMap((r) => [1, 2, 3, 4, 5].map((n) => `${r}-${n}`)).concat('F-1').map((s) => <option key={s}>{s}</option>)}</Select></label>
+            <div className="flex flex-col gap-1.5"><span className="text-xs font-bold text-muted-light">Store in</span>
+              <Segmented dark full label="Store in" value={size === 'Chilled' ? 'shelf' : store} onChange={setStore} options={[{ value: 'shelf', label: 'Parcel room shelf' }, { value: 'locker', label: `Smart locker${freeLocker ? ` · ${freeLocker} free` : ' · full'}` }]} />
+            </div>
+            {store === 'locker' && size !== 'Chilled' ? <p className="text-xs text-[#A9C4FF]">Goes in locker {freeLocker ?? '—'}. The resident opens it with their pickup code, any time, without the guard.</p> : <label className="flex flex-col gap-1.5 text-xs font-bold text-muted-light">Shelf<Select dark value={size === 'Chilled' ? 'F-1' : shelf} disabled={size === 'Chilled'} onChange={(e) => setShelf(e.target.value)}>{['A', 'B', 'C', 'D', 'E'].flatMap((r) => [1, 2, 3, 4, 5].map((n) => `${r}-${n}`)).concat('F-1').map((s) => <option key={s}>{s}</option>)}</Select></label>}
             {size === 'Chilled' && <p className="text-xs text-[#A9C4FF]">Chilled items go in the parcel fridge (F-1). The resident gets a 2-hour reminder.</p>}
             <Button type="submit" size="xl" variant="nightPrimary" icon={<Package className="h-5 w-5" />}>Log parcel and notify</Button>
           </form>
@@ -112,7 +120,7 @@ export default function GuardParcels() {
             {matched && (
               <div className="flex flex-col gap-3 rounded-xl bg-teal/10 p-4">
                 <p className="font-bold">{matched.courier} · {matched.size}</p>
-                <p className="text-sm text-[#C9D3EE]">{matched.unit} · {matched.recipient} · shelf <b className="font-mono text-white">{matched.shelf}</b></p>
+                <p className="text-sm text-[#C9D3EE]">{matched.unit} · {matched.recipient} · {matched.locker ? 'smart' : 'shelf'} <b className="font-mono text-white">{matched.shelf}</b></p>
                 <Button size="xl" variant="teal" icon={<PackageCheck className="h-5 w-5" />} onClick={() => handOver(matched)}>Hand over</Button>
               </div>
             )}
@@ -125,7 +133,7 @@ export default function GuardParcels() {
                   <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-night-panel font-mono text-xs font-bold">{p.shelf}</span>
                   <div className="min-w-0 flex-1"><p className="font-semibold">{p.unit} · {p.recipient}</p><p className="text-xs text-muted-light">{p.courier} · {relative(p.loggedAt)}</p></div>
                   {p.size === 'Chilled' && <Chip dark tone="blue">Chilled</Chip>}
-                  <Button size="sm" variant="night" onClick={() => handOver(p)}>Hand over</Button>
+                  {p.locker ? <Chip dark tone="teal">In locker · self-collect</Chip> : <Button size="sm" variant="night" onClick={() => handOver(p)}>Hand over</Button>}
                 </li>
               ))}
               {!filtered.length && <li className="p-6 text-center text-sm text-muted-light">No parcels waiting.</li>}

@@ -44,7 +44,7 @@ await step('Launcher lists the four apps and resets demo data', async () => {
   await portal.getByRole('button', { name: 'Reset demo data' }).click();
   await portal.getByRole('dialog').getByRole('button', { name: 'Reset' }).click();
   await expect(portal.getByText('Demo data reset')).toBeVisible(T);
-  for (const t of ['Management Portal', 'Guard Tablet', 'Resident App', 'Visitor & Courier Pass']) await expect(portal.getByText(t, { exact: true })).toBeVisible(T);
+  for (const t of ['Management Portal', 'Guard Tablet', 'Resident App', 'Visitor & Courier Pass', 'Lobby Intercom Panel']) await expect(portal.getByText(t, { exact: true })).toBeVisible(T);
 });
 
 await step('Portal: protected routes redirect to sign-in', async () => {
@@ -485,6 +485,64 @@ await step('Reports: the same report downloads as a real PDF, Excel and CSV file
     const buf = fs.readFileSync(await dl.path());
     if (!buf.subarray(0, 12).toString('latin1').startsWith(head)) throw new Error(`${fmt}: file does not start with ${head}`);
   }
+});
+
+await step('Parcel locker: guard puts a parcel in a smart locker; resident opens the locker from the app', async () => {
+  await go(guard, '/guard/parcels');
+  await guard.getByLabel('Unit').fill('A-15-07');
+  await guard.getByLabel('Tracking number').fill('LOCKER0001');
+  await guard.getByRole('tab', { name: /Smart locker/ }).click();
+  await guard.getByRole('button', { name: 'Log parcel and notify' }).click();
+  await expect(guard.getByText(/In smart locker L-\d+/)).toBeVisible(T);
+  await go(res, '/app/parcels');
+  const card = res.locator('.card', { hasText: 'LOCKER0001' });
+  await expect(card.getByText('Smart locker')).toBeVisible(T);
+  await card.getByRole('button', { name: /Open locker L-\d+/ }).click();
+  await expect(res.getByText(/Locker L-\d+ opened/)).toBeVisible(T);
+  await res.getByRole('tab', { name: 'Collected' }).click();
+  await expect(res.getByText('LOCKER0001', { exact: false })).toBeVisible(T);
+});
+
+await step('UHF tag, accounts and integrations: manager issues a windscreen tag, downloads the strata statement, tests a connection', async () => {
+  await go(portal, '/portal/residents/A-15-07');
+  await portal.getByRole('button', { name: 'Issue UHF tag' }).first().click();
+  await expect(portal.getByText(/Tag UHF-\d+ issued/)).toBeVisible(T);
+  await go(portal, '/portal/community?tab=fees');
+  await expect(portal.getByRole('heading', { name: 'Strata accounts' })).toBeVisible(T);
+  const [dl] = await Promise.all([portal.waitForEvent('download', T), portal.getByRole('button', { name: 'Statement (PDF)' }).click()]);
+  if (!dl.suggestedFilename().endsWith('.pdf')) throw new Error('statement not a PDF');
+  await go(portal, '/portal/integrations');
+  await portal.getByRole('button', { name: 'Test Boom barriers' }).click();
+  await expect(portal.getByText('Boom barriers: connected')).toBeVisible(T);
+  await portal.getByRole('tab', { name: /Needs attention/ }).click();
+  await expect(portal.getByRole('cell', { name: 'CAM 31' })).toBeVisible(T);
+});
+
+await step('Map timeline: evidence search shows a person\'s sightings numbered on the site map', async () => {
+  await go(portal, '/portal/search?q=person%20in%20dark%20hoodie%2C%20perimeter%2C%20tonight');
+  await portal.locator('main button[aria-pressed]').first().click();
+  await expect(portal.getByRole('img', { name: /Map of \d+ sightings in time order/ })).toBeVisible(T);
+});
+
+await step('Video intercom: visitor calls A-15-07 from the lobby panel; resident answers and opens the door; guard call declined', async () => {
+  await go(res, '/app');
+  await go(visitor, '/panel');
+  for (const d of '1507') await visitor.getByRole('button', { name: d, exact: true }).click();
+  await visitor.getByRole('button', { name: 'Call A-15-07' }).click();
+  await expect(visitor.getByText('Calling A-15-07…')).toBeVisible(T);
+  const call = res.getByRole('dialog', { name: 'Video call from Tower A lobby panel' });
+  await expect(call).toBeVisible(T);
+  await call.getByRole('button', { name: 'Answer' }).click();
+  await expect(visitor.getByText('Connected to A-15-07')).toBeVisible(T);
+  await call.getByRole('button', { name: 'Open lobby door' }).click();
+  await expect(visitor.getByText('Door open')).toBeVisible(T);
+  await go(guard, '/guard/messages');
+  await guard.getByRole('button', { name: /A-15-07/ }).click();
+  await guard.getByRole('button', { name: 'Call unit' }).click();
+  const g = res.getByRole('dialog', { name: 'Video call from Guardhouse' });
+  await expect(g).toBeVisible(T);
+  await g.getByRole('button', { name: 'Decline' }).click();
+  await expect(guard.getByText('A-15-07 declined the call')).toBeVisible(T);
 });
 
 await step('Guard shift handover: checklist, sign off, logged out', async () => {

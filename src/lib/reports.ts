@@ -3,7 +3,8 @@ import type { ReportData } from '@/lib/export';
 import { CAMERAS } from '@/data/cameras';
 import { PARKING_VIOLATIONS } from '@/data/parking';
 import { SITE } from '@/data/seed';
-import { when } from '@/lib/utils';
+import { rm, when } from '@/lib/utils';
+import { strataAccounts } from '@/lib/accounts';
 
 type State = ReturnType<typeof useStore.getState>;
 
@@ -160,6 +161,18 @@ export const REPORTS: ReportDef[] = [
   {
     name: 'Permits', desc: 'Renovation and move permits with deposits and breaches', frequency: 'Weekly', audience: 'MC',
     build: (s) => ({ file: 'permits', columns: ['Permit', 'Unit', 'Scope', 'Contractor', 'Start', 'End', 'Status', 'Deposit'], rows: s.permits.map((p) => [p.id, p.unit, p.scope, p.contractor, p.start, p.end, p.status, p.deposit]) }),
+  },
+  {
+    name: 'Strata accounts', desc: 'Maintenance fund and sinking fund ledger, collections, deposits held and balances', frequency: 'Monthly / quarterly', audience: 'JMB committee, AGM',
+    build: (s) => {
+      const a = strataAccounts(s);
+      return {
+        file: 'strata-accounts',
+        summary: [['Period', a.quarter], ['Collection rate', `${(a.collectionRate * 100).toFixed(1)}%`], ['Maintenance fund balance', rm(a.balance.maintenance)], ['Sinking fund balance', rm(a.balance.sinking)], ['Deposits held (refundable)', rm(a.depositsHeld)]],
+        columns: ['Item', 'Fund', 'Amount (RM)'],
+        rows: a.ledger.map(([k, f, v]) => [k, f, v.toLocaleString('en-MY', { minimumFractionDigits: 2 })]),
+      };
+    },
   },
   {
     name: 'Pilot success metrics', desc: 'The five pilot review measures from the implementation plan, against target', frequency: 'After the 2-week pilot', audience: 'JMB committee, EzTEC',

@@ -150,6 +150,13 @@ function UnitDetail({ unitId }: { unitId: string }) {
     setMember(false); setMName('');
   };
 
+  const issueTag = (plate: string) => {
+    const tag = `UHF-${Math.floor(100000 + Math.random() * 900000)}`;
+    updateUnit(u.unit, { vehicles: u.vehicles.map((v) => (v.plate === plate ? { ...v, tag } : v)) });
+    log({ who: useStore.getState().session.portal?.name ?? 'Farah Hanim', role: 'Building Manager', action: 'Added', record: `UHF tag ${tag} for ${plate}` });
+    toast.success(`Tag ${tag} issued to ${plate}`, 'The barrier reads it from 8 m, even when the plate is dirty or damaged.');
+  };
+
   const addVehicle = () => {
     if (!vPlate.trim()) return toast.error('Enter a plate');
     if (u.vehicles.length >= limits.vehiclesPerUnit) return toast.error(`This unit already has ${limits.vehiclesPerUnit} cars`, 'Change the limit in Site settings, or remove a car first.');
@@ -275,7 +282,8 @@ function UnitDetail({ unitId }: { unitId: string }) {
               {u.vehicles.map((v) => (
                 <li key={v.plate} className="flex items-center gap-3 rounded-xl border border-line p-3">
                   <Car className="h-5 w-5 text-muted" />
-                  <div className="flex-1"><Plate>{v.plate}</Plate><p className="mt-1 text-xs text-muted">{v.model}</p></div>
+                  <div className="flex-1"><Plate>{v.plate}</Plate><p className="mt-1 text-xs text-muted">{v.model}{v.tag ? ` · UHF tag ${v.tag}` : ' · no UHF tag'}</p></div>
+                  {!v.tag && <Button size="sm" variant="ghost" onClick={() => issueTag(v.plate)}>Issue UHF tag</Button>}
                   <Button size="sm" variant="ghost" onClick={() => removeVehicle(v.plate)}>Remove</Button>
                 </li>
               ))}
