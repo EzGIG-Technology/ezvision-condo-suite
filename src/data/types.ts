@@ -1,0 +1,319 @@
+export type Scene = 'gate' | 'lobby' | 'fence' | 'carpark' | 'corridor' | 'pool' | 'bin' | 'sidegate' | 'guardpost';
+export type Tone = 'red' | 'amber' | 'teal' | 'blue';
+export type Severity = 'critical' | 'high' | 'warning' | 'nuisance' | 'info';
+export type AlertStatus = 'open' | 'acknowledged' | 'dispatched' | 'on_scene' | 'closed';
+
+export interface TimelineEntry {
+  at: string;
+  text: string;
+  kind: 'detect' | 'system' | 'action' | 'guard' | 'close';
+}
+
+export interface Alert {
+  id: string;
+  ref: string;
+  category: 'unregistered' | 'perimeter' | 'carpark' | 'vehicle' | 'safety' | 'nuisance' | 'contractor' | 'sos' | 'report' | 'operations';
+  title: string;
+  where: string;
+  camera: string;
+  scene: Scene;
+  at: string;
+  severity: Severity;
+  status: AlertStatus;
+  owner?: string;
+  faceVariant?: number;
+  plate?: string;
+  summary: string;
+  timeline: TimelineEntry[];
+  outcome?: string;
+  policeRef?: string;
+  unit?: string;
+  unknownId?: string;
+  talkDown?: boolean;
+}
+
+export type VisitType = 'guest' | 'contractor' | 'rider' | 'helper' | 'driver' | 'event' | 'family' | 'tutor';
+export type VisitStatus = 'expected' | 'on_site' | 'left' | 'cancelled' | 'denied';
+
+export interface Visit {
+  id: string;
+  name: string;
+  phone: string;
+  type: VisitType;
+  unit: string;
+  host: string;
+  plate?: string;
+  status: VisitStatus;
+  entry?: string;
+  checkIn?: string;
+  checkOut?: string;
+  validFrom: string;
+  validTo: string;
+  verification?: string;
+  selfie: boolean;
+  faceVariant: number;
+  people: number;
+  recurringDays?: boolean[];
+  note?: string;
+  createdBy: 'resident' | 'guard' | 'management';
+}
+
+export interface Approval {
+  id: string;
+  visitorName: string;
+  unit: string;
+  purpose: string;
+  plate?: string;
+  faceVariant: number;
+  createdAt: string;
+  status: 'waiting' | 'approved' | 'declined';
+  until: string;
+  respondedAt?: string;
+  respondedBy?: string;
+  visitId?: string;
+  idLast4: string;
+}
+
+export interface Parcel {
+  id: string;
+  unit: string;
+  recipient: string;
+  courier: string;
+  size: 'Small' | 'Medium' | 'Large' | 'Chilled';
+  tracking: string;
+  shelf: string;
+  loggedAt: string;
+  loggedBy: string;
+  status: 'waiting' | 'collected';
+  code: string;
+  collectedAt?: string;
+  collectedBy?: string;
+}
+
+export interface Sighting {
+  scene: Scene;
+  camera: string;
+  at: string;
+}
+
+export interface UnknownFace {
+  id: string;
+  variant: number;
+  where: string;
+  at: string;
+  note: string;
+  status: 'unresolved' | 'known' | 'watchlisted' | 'registered';
+  resolution?: string;
+  sightings: Sighting[];
+  similarity: number;
+  description: string;
+}
+
+export interface UnknownPlate {
+  id: string;
+  plate: string;
+  vehicle: string;
+  firstSeen: string;
+  attempts: number;
+  lane: string;
+  outcome: string;
+  status: 'open' | 'linked' | 'watchlisted';
+}
+
+export interface WatchEntry {
+  id: string;
+  kind: 'person' | 'vehicle';
+  name: string;
+  plate?: string;
+  vehicle?: string;
+  variant?: number;
+  reason: string;
+  level: 'Alert all guards' | 'Deny entry' | 'Alert only' | 'Deny and alert';
+  addedBy: string;
+  addedAt: string;
+  until: string;
+  lastSeen: string;
+}
+
+export type PermitStatus = 'review' | 'active' | 'awaiting_deposit' | 'ending' | 'breach' | 'rejected' | 'completed' | 'changes_requested';
+
+export interface Worker {
+  name: string;
+  id: string;
+  variant: number;
+  enrolled: boolean;
+}
+
+export interface Permit {
+  id: string;
+  kind: 'renovation' | 'move_in' | 'move_out' | 'delivery';
+  unit: string;
+  owner: string;
+  scope: string;
+  contractor: string;
+  workers: Worker[];
+  onSite: number;
+  start: string;
+  end: string;
+  hours: string;
+  zones: string;
+  deposit: number;
+  depositPaid: boolean;
+  status: PermitStatus;
+  submittedAt: string;
+  docs: { name: string; ok: boolean; note: string }[];
+}
+
+export interface LiftBooking {
+  id: string;
+  date: string;
+  slot: string;
+  what: string;
+  unit: string;
+  lift: string;
+  kind: 'move_in' | 'move_out' | 'delivery';
+}
+
+export interface Booking {
+  id: string;
+  facility: string;
+  unit: string;
+  date: string;
+  from: number;
+  to: number;
+  status: 'confirmed' | 'cancelled';
+  fee: number;
+  deposit: number;
+  label?: string;
+}
+
+export interface Announcement {
+  id: string;
+  title: string;
+  body: string;
+  audience: string;
+  channels: string[];
+  sentAt: string;
+  sentBy: string;
+}
+
+export interface Rule {
+  id: string;
+  group: 'Access' | 'Perimeter' | 'Carpark' | 'Safety' | 'Nuisance' | 'Operations';
+  name: string;
+  cameras: number;
+  schedule: string;
+  enabled: boolean;
+  sensitivity: number;
+  dwellMin: number;
+  firedWeek: number;
+  falseWeek: number;
+  actions: { talkDown: boolean; alertGuard: boolean; dispatch: boolean; escalate: boolean };
+}
+
+export interface ResidentNotice {
+  id: string;
+  unit: string;
+  title: string;
+  body: string;
+  at: string;
+  kind: 'security' | 'visitor' | 'parcel' | 'vehicle' | 'billing' | 'announcement' | 'booking' | 'permit';
+  read: boolean;
+  link?: string;
+}
+
+export interface Bill {
+  id: string;
+  unit: string;
+  label: string;
+  amount: number;
+  lines: { label: string; amount: number }[];
+  due?: string;
+  status: 'due' | 'paid';
+  paidAt?: string;
+  method?: string;
+}
+
+export interface Checkpoint {
+  id: string;
+  name: string;
+  camera: string;
+  x: number;
+  y: number;
+  status: 'done' | 'late' | 'missed' | 'next' | 'todo';
+  at?: string;
+}
+
+export interface Guard {
+  id: string;
+  name: string;
+  initials: string;
+  shift: 'Night' | 'Day' | 'Evening';
+  where: string;
+  state: 'At post' | 'Patrolling' | 'Responding' | 'Off duty' | 'On break';
+  color: string;
+  alertsClosed: number;
+  avgResponse: string;
+  patrolPct: number;
+  unattended: string;
+  talkDowns: number;
+  rating: 'Excellent' | 'Good' | 'Needs coaching';
+  pin: string;
+}
+
+export interface Ticket {
+  id: string;
+  title: string;
+  meta: string;
+  evidence: boolean;
+  state: 'New' | 'Assigned' | 'In progress' | 'Investigating' | 'Monitoring' | 'Resolved';
+  unit?: string;
+}
+
+export interface DataRequest {
+  id: string;
+  title: string;
+  meta: string;
+  state: 'New' | 'In progress' | 'Done';
+}
+
+export interface AuditEntry {
+  id: string;
+  at: string;
+  who: string;
+  role: string;
+  action: 'Viewed' | 'Exported' | 'Added' | 'Deleted' | 'Changed' | 'Approved' | 'Closed' | 'Sent';
+  record: string;
+}
+
+export interface Retention {
+  id: string;
+  data: string;
+  keep: string;
+  options: string[];
+  why: string;
+}
+
+export interface UnitRecord {
+  unit: string;
+  tower: 'A' | 'B' | 'C';
+  name: string;
+  meta: string;
+  tag: 'Owner' | 'Tenant' | 'Vacant' | 'Ending' | 'Reno';
+  size: number;
+  beds: number;
+  owner: string;
+  since: string;
+  tenancyEnds?: string;
+  bays: string;
+  feesOk: boolean;
+  household: { name: string; role: string; app: boolean; face: boolean }[];
+  vehicles: { plate: string; model: string }[];
+  cards: { id: string; holder: string; active: boolean; note?: string }[];
+}
+
+export interface Session {
+  portal?: { name: string; role: string; email: string };
+  guardId?: string;
+  resident?: { name: string; unit: string };
+}

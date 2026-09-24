@@ -1,0 +1,12 @@
+[
+  "Mobile: 6 portal pages were wider than a 390 px phone (up to 361 px too wide). The phone zoomed the whole page out, and dialog buttons became hard to tap. There were three causes: charts that never shrank below 600 px, grid columns that grew to fit wide tables, and hidden screen-reader text inside scrolling tables. All three are fixed. Every page now fits the phone width.",
+  "Dialogs: typing in the second or later field sent focus back to the first field, because an inline onClose re-ran the modal's focus effect on every keystroke. Fixed for every modal and drawer.",
+  "Permits and Unregistered: at 1280 px and wider, clicking a row also opened the mobile detail drawer over the side panel and blocked its buttons. The drawer now opens only below 1280 px.",
+  "Live View: Full screen did nothing where the browser blocks the Fullscreen API. It now switches to a video-wall mode with an Exit button, and Esc also exits.",
+  "Guard tablet: the logo overflowed the 92 px navigation rail and covered the header. The rail now shows the icon only. Visitor rows on phones now wrap the Check in button onto its own line so names are no longer squeezed.",
+  "Unregistered gallery: sighting thumbnails ignored their width and pushed the text 27 px off-screen. Camera tiles and form fields now respect the width a page gives them.",
+  "Guard Performance: the status dropdown collapsed and the row actions were clipped. The dropdown now has a fixed width and the row actions are icon buttons. Community bookings: the day tabs now scroll inside the card on phones.",
+  "Charts: the last x-axis label was clipped at the right edge.",
+  "Evidence Search: the selected result now reports its pressed state to screen readers. Resident Activity: notices with no link that are already read are no longer shown as buttons.",
+  "Guard PIN pad: Delete is disabled while no digits are entered."
+]

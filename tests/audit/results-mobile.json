@@ -1,0 +1,487 @@
+{
+  "viewport": "mobile",
+  "routes": [
+    {
+      "surface": "public",
+      "route": "/",
+      "finalUrl": "/",
+      "clickables": 5,
+      "tested": 8,
+      "dead": 0
+    },
+    {
+      "surface": "public",
+      "route": "/login",
+      "finalUrl": "/login",
+      "clickables": 5,
+      "tested": 8,
+      "dead": 0
+    },
+    {
+      "surface": "public",
+      "route": "/guard/login",
+      "finalUrl": "/guard/login",
+      "clickables": 17,
+      "tested": 17,
+      "dead": 0
+    },
+    {
+      "surface": "public",
+      "route": "/app/login",
+      "finalUrl": "/app/login",
+      "clickables": 2,
+      "tested": 1,
+      "dead": 0
+    },
+    {
+      "surface": "public",
+      "route": "/v/v-10",
+      "finalUrl": "/v/v-10",
+      "clickables": 2,
+      "tested": 3,
+      "dead": 0
+    },
+    {
+      "surface": "public",
+      "route": "/v/v-10/selfie",
+      "finalUrl": "/v/v-10/selfie",
+      "clickables": 2,
+      "tested": 1,
+      "dead": 0
+    },
+    {
+      "surface": "public",
+      "route": "/v/v-1",
+      "finalUrl": "/v/v-1",
+      "clickables": 1,
+      "tested": 0,
+      "dead": 0
+    },
+    {
+      "surface": "public",
+      "route": "/d/A15074K2P",
+      "finalUrl": "/d/A15074K2P",
+      "clickables": 0,
+      "tested": 0,
+      "dead": 0
+    },
+    {
+      "surface": "public",
+      "route": "/d/bad",
+      "finalUrl": "/d/bad",
+      "clickables": 0,
+      "tested": 0,
+      "dead": 0
+    },
+    {
+      "surface": "public",
+      "route": "/v/nope",
+      "finalUrl": "/v/nope",
+      "clickables": 0,
+      "tested": 0,
+      "dead": 0
+    },
+    {
+      "surface": "public",
+      "route": "/nonexistent",
+      "finalUrl": "/nonexistent",
+      "clickables": 1,
+      "tested": 1,
+      "dead": 0
+    },
+    {
+      "surface": "portal",
+      "route": "/portal/dashboard",
+      "finalUrl": "/portal/dashboard",
+      "clickables": 33,
+      "tested": 70,
+      "dead": 0
+    },
+    {
+      "surface": "portal",
+      "route": "/portal/live",
+      "finalUrl": "/portal/live",
+      "clickables": 32,
+      "tested": 26,
+      "dead": 0
+    },
+    {
+      "surface": "portal",
+      "route": "/portal/incidents",
+      "finalUrl": "/portal/incidents",
+      "clickables": 12,
+      "tested": 9,
+      "dead": 0
+    },
+    {
+      "surface": "portal",
+      "route": "/portal/incidents/al-2",
+      "finalUrl": "/portal/incidents/al-2",
+      "clickables": 17,
+      "tested": 15,
+      "dead": 0
+    },
+    {
+      "surface": "portal",
+      "route": "/portal/unregistered",
+      "finalUrl": "/portal/unregistered",
+      "clickables": 19,
+      "tested": 44,
+      "dead": 0
+    },
+    {
+      "surface": "portal",
+      "route": "/portal/search",
+      "finalUrl": "/portal/search",
+      "clickables": 22,
+      "tested": 12,
+      "dead": 0
+    },
+    {
+      "surface": "portal",
+      "route": "/portal/search?q=red%20myvi%20yesterday",
+      "finalUrl": "/portal/search?q=red%20myvi%20yesterday",
+      "clickables": 22,
+      "tested": 6,
+      "dead": 0
+    },
+    {
+      "surface": "portal",
+      "route": "/portal/visitors",
+      "finalUrl": "/portal/visitors",
+      "clickables": 23,
+      "tested": 20,
+      "dead": 0
+    },
+    {
+      "surface": "portal",
+      "route": "/portal/vehicles",
+      "finalUrl": "/portal/vehicles",
+      "clickables": 43,
+      "tested": 39,
+      "dead": 0
+    },
+    {
+      "surface": "portal",
+      "route": "/portal/permits",
+      "finalUrl": "/portal/permits",
+      "clickables": 7,
+      "tested": 10,
+      "dead": 0
+    },
+    {
+      "surface": "portal",
+      "route": "/portal/residents",
+      "finalUrl": "/portal/residents",
+      "clickables": 18,
+      "tested": 15,
+      "dead": 0
+    },
+    {
+      "surface": "portal",
+      "route": "/portal/residents/A-15-07",
+      "finalUrl": "/portal/residents/A-15-07",
+      "clickables": 21,
+      "tested": 29,
+      "dead": 0
+    },
+    {
+      "surface": "portal",
+      "route": "/portal/watchlist",
+      "finalUrl": "/portal/watchlist",
+      "clickables": 20,
+      "tested": 7,
+      "dead": 0
+    },
+    {
+      "surface": "portal",
+      "route": "/portal/guards",
+      "finalUrl": "/portal/guards",
+      "clickables": 24,
+      "tested": 56,
+      "dead": 0
+    },
+    {
+      "surface": "portal",
+      "route": "/portal/community",
+      "finalUrl": "/portal/community",
+      "clickables": 9,
+      "tested": 10,
+      "dead": 0
+    },
+    {
+      "surface": "portal",
+      "route": "/portal/community?tab=bookings",
+      "finalUrl": "/portal/community?tab=bookings",
+      "clickables": 21,
+      "tested": 17,
+      "dead": 0
+    },
+    {
+      "surface": "portal",
+      "route": "/portal/community?tab=tickets",
+      "finalUrl": "/portal/community?tab=tickets",
+      "clickables": 11,
+      "tested": 7,
+      "dead": 0
+    },
+    {
+      "surface": "portal",
+      "route": "/portal/community?tab=fees",
+      "finalUrl": "/portal/community?tab=fees",
+      "clickables": 18,
+      "tested": 4,
+      "dead": 0
+    },
+    {
+      "surface": "portal",
+      "route": "/portal/community?tab=parcels",
+      "finalUrl": "/portal/community?tab=parcels",
+      "clickables": 10,
+      "tested": 2,
+      "dead": 0
+    },
+    {
+      "surface": "portal",
+      "route": "/portal/community?tab=voting",
+      "finalUrl": "/portal/community?tab=voting",
+      "clickables": 10,
+      "tested": 7,
+      "dead": 0
+    },
+    {
+      "surface": "portal",
+      "route": "/portal/reports",
+      "finalUrl": "/portal/reports",
+      "clickables": 23,
+      "tested": 25,
+      "dead": 0
+    },
+    {
+      "surface": "portal",
+      "route": "/portal/rules",
+      "finalUrl": "/portal/rules",
+      "clickables": 57,
+      "tested": 148,
+      "dead": 0
+    },
+    {
+      "surface": "portal",
+      "route": "/portal/privacy",
+      "finalUrl": "/portal/privacy",
+      "clickables": 12,
+      "tested": 8,
+      "dead": 0
+    },
+    {
+      "surface": "guard",
+      "route": "/guard",
+      "finalUrl": "/guard",
+      "clickables": 24,
+      "tested": 24,
+      "dead": 0
+    },
+    {
+      "surface": "guard",
+      "route": "/guard/alerts",
+      "finalUrl": "/guard/alerts",
+      "clickables": 14,
+      "tested": 9,
+      "dead": 0
+    },
+    {
+      "surface": "guard",
+      "route": "/guard/alerts/al-2",
+      "finalUrl": "/guard/alerts/al-2",
+      "clickables": 14,
+      "tested": 14,
+      "dead": 0
+    },
+    {
+      "surface": "guard",
+      "route": "/guard/walk-in",
+      "finalUrl": "/guard/walk-in",
+      "clickables": 8,
+      "tested": 2,
+      "dead": 0
+    },
+    {
+      "surface": "guard",
+      "route": "/guard/verify",
+      "finalUrl": "/guard/verify",
+      "clickables": 9,
+      "tested": 3,
+      "dead": 0
+    },
+    {
+      "surface": "guard",
+      "route": "/guard/parcels",
+      "finalUrl": "/guard/parcels",
+      "clickables": 11,
+      "tested": 5,
+      "dead": 0
+    },
+    {
+      "surface": "guard",
+      "route": "/guard/patrol",
+      "finalUrl": "/guard/patrol",
+      "clickables": 10,
+      "tested": 6,
+      "dead": 0
+    },
+    {
+      "surface": "guard",
+      "route": "/guard/report",
+      "finalUrl": "/guard/report",
+      "clickables": 15,
+      "tested": 8,
+      "dead": 0
+    },
+    {
+      "surface": "resident",
+      "route": "/app",
+      "finalUrl": "/app",
+      "clickables": 21,
+      "tested": 20,
+      "dead": 0
+    },
+    {
+      "surface": "resident",
+      "route": "/app/invite",
+      "finalUrl": "/app/invite",
+      "clickables": 17,
+      "tested": 12,
+      "dead": 0
+    },
+    {
+      "surface": "resident",
+      "route": "/app/pass/v-14",
+      "finalUrl": "/app/pass/v-14",
+      "clickables": 13,
+      "tested": 8,
+      "dead": 0
+    },
+    {
+      "surface": "resident",
+      "route": "/app/visitors",
+      "finalUrl": "/app/visitors",
+      "clickables": 12,
+      "tested": 5,
+      "dead": 0
+    },
+    {
+      "surface": "resident",
+      "route": "/app/parcels",
+      "finalUrl": "/app/parcels",
+      "clickables": 11,
+      "tested": 6,
+      "dead": 0
+    },
+    {
+      "surface": "resident",
+      "route": "/app/book",
+      "finalUrl": "/app/book",
+      "clickables": 34,
+      "tested": 29,
+      "dead": 0
+    },
+    {
+      "surface": "resident",
+      "route": "/app/activity",
+      "finalUrl": "/app/activity",
+      "clickables": 18,
+      "tested": 11,
+      "dead": 0
+    },
+    {
+      "surface": "resident",
+      "route": "/app/unit",
+      "finalUrl": "/app/unit",
+      "clickables": 25,
+      "tested": 19,
+      "dead": 0
+    },
+    {
+      "surface": "resident",
+      "route": "/app/face",
+      "finalUrl": "/app/face",
+      "clickables": 9,
+      "tested": 0,
+      "dead": 0
+    },
+    {
+      "surface": "resident",
+      "route": "/app/renovation",
+      "finalUrl": "/app/renovation",
+      "clickables": 9,
+      "tested": 1,
+      "dead": 0
+    },
+    {
+      "surface": "resident",
+      "route": "/app/billing",
+      "finalUrl": "/app/billing",
+      "clickables": 12,
+      "tested": 9,
+      "dead": 0
+    },
+    {
+      "surface": "resident",
+      "route": "/app/approval/ap-1",
+      "finalUrl": "/app/approval/ap-1",
+      "clickables": 5,
+      "tested": 4,
+      "dead": 0
+    },
+    {
+      "surface": "resident",
+      "route": "/app/sos",
+      "finalUrl": "/app/sos",
+      "clickables": 6,
+      "tested": 5,
+      "dead": 0
+    }
+  ],
+  "dead": [],
+  "errors": [],
+  "overflow": [],
+  "tested": 825,
+  "ok": 832,
+  "external": [
+    {
+      "route": "/v/v-10",
+      "i": 0,
+      "tag": "a",
+      "text": "Directions",
+      "aria": "",
+      "href": "https://maps.google.com/?q=Vista+Harmoni+Residences",
+      "target": "_blank",
+      "type": "",
+      "inDialog": false
+    },
+    {
+      "route": "/app/unit",
+      "i": 19,
+      "tag": "a",
+      "text": "Privacy and your data",
+      "aria": "",
+      "href": "mailto:dpo@vistaharmoni.my",
+      "target": "",
+      "type": "",
+      "inDialog": false
+    },
+    {
+      "route": "/app/sos",
+      "i": 5,
+      "tag": "a",
+      "text": "For police, fire or ambulance, call 999",
+      "aria": "",
+      "href": "tel:999",
+      "target": "",
+      "type": "",
+      "inDialog": false
+    }
+  ],
+  "skipped": 366,
+  "selfLinks": 4
+}

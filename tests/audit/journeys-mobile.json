@@ -1,0 +1,100 @@
+{
+  "results": [
+    {
+      "name": "Launcher lists the four apps and resets demo data",
+      "ok": true,
+      "ms": 2616
+    },
+    {
+      "name": "Portal: protected routes redirect to sign-in",
+      "ok": true,
+      "ms": 265
+    },
+    {
+      "name": "Portal: sign in with email, password and 2-step code",
+      "ok": true,
+      "ms": 3580
+    },
+    {
+      "name": "Guard: wrong PIN is refused, right PIN signs in",
+      "ok": true,
+      "ms": 21746
+    },
+    {
+      "name": "Resident: sign in with phone and SMS code",
+      "ok": true,
+      "ms": 3212
+    },
+    {
+      "name": "Walk-in: guard scans ID, checks face, asks A-15-07; resident approves in the app; guard checks in; portal sees visitor",
+      "ok": true,
+      "ms": 23227
+    },
+    {
+      "name": "Invite: resident creates a pass; visitor opens it and adds a selfie; guard verifies by PIN and checks in; resident is notified",
+      "ok": true,
+      "ms": 9218
+    },
+    {
+      "name": "SOS: resident holds SOS; guard tablet gets banner and responds; resident sees each step; closed",
+      "ok": true,
+      "ms": 26245
+    },
+    {
+      "name": "Parcel: guard logs a parcel; resident sees the code; guard hands over by code; resident history updates",
+      "ok": true,
+      "ms": 6945
+    },
+    {
+      "name": "Renovation: resident applies; manager approves in the portal; resident pays deposit; permit active",
+      "ok": true,
+      "ms": 33985
+    },
+    {
+      "name": "Announcement: manager composes; resident receives it",
+      "ok": true,
+      "ms": 6258
+    },
+    {
+      "name": "Unregistered gallery: add unknown person to watchlist; appears on the watchlist page",
+      "ok": true,
+      "ms": 12431
+    },
+    {
+      "name": "Facility booking: resident books BBQ pit; manager sees it on the bookings timeline",
+      "ok": true,
+      "ms": 18278
+    },
+    {
+      "name": "Billing: resident pays the Q4 bill by FPX and downloads the receipt",
+      "ok": true,
+      "ms": 10179
+    },
+    {
+      "name": "Patrol: guard verifies next checkpoint; portal patrol matrix updates",
+      "ok": true,
+      "ms": 3320
+    },
+    {
+      "name": "Face access: resident enrols with consent, then deletes",
+      "ok": true,
+      "ms": 17328
+    },
+    {
+      "name": "Incident: manager acknowledges, dispatches and closes an alert with outcome; evidence pack downloads",
+      "ok": true,
+      "ms": 5118
+    },
+    {
+      "name": "Guard shift handover: checklist, sign off, logged out",
+      "ok": true,
+      "ms": 14791
+    },
+    {
+      "name": "Sign out: resident and portal",
+      "ok": true,
+      "ms": 7152
+    }
+  ],
+  "errors": []
+}
