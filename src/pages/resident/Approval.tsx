@@ -18,6 +18,7 @@ export default function ResidentApproval() {
   const navigate = useNavigate();
   const [regular, setRegular] = useState(false);
   const a = approvals.find((x) => x.id === id);
+  const rider = !!a && / delivery to your door$/.test(a.purpose);
 
   if (!session) return <Navigate to="/app/login" replace />;
 
@@ -59,12 +60,14 @@ export default function ResidentApproval() {
         <p className="text-[15px] text-[#C9D3EE]">says they are here for <b className="text-white">{a.purpose.toLowerCase()}</b></p>
       </div>
       <div className="flex flex-col gap-2 rounded-2xl bg-white/5 p-4 text-[13.5px]">
-        <p className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-teal-bright" />IC checked by the guard · ending {a.idLast4}</p>
+        {rider
+          ? <p className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-teal-bright" />Logged by the guard · phone ending {a.idLast4}</p>
+          : <p className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-teal-bright" />IC checked by the guard · ending {a.idLast4}</p>}
         <p className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-teal-bright" />Not on the building watchlist</p>
         {a.plate && <p className="flex items-center gap-2">Car <Plate light>{a.plate}</Plate></p>}
-        <p className="text-xs text-muted-light">If approved, the pass lasts until {a.until}.</p>
+        <p className="text-xs text-muted-light">{rider ? `Riders normally stay at the lobby drop-off. If you let them up, their pass lasts ${a.until}.` : `If approved, the pass lasts until ${a.until}.`}</p>
       </div>
-      <Checkbox dark checked={regular} onChange={setRegular} label="Save as a regular visitor" sub="Next time they are let in without asking you (Tue and Thu)." />
+      {!rider && <Checkbox dark checked={regular} onChange={setRegular} label="Save as a regular visitor" sub="Next time they are let in without asking you (Tue and Thu)." />}
       <div className="mt-auto grid grid-cols-2 gap-3">
         <Button size="xl" variant="danger" icon={<X className="h-5 w-5" />} onClick={() => decide(false)}>Decline</Button>
         <Button size="xl" variant="teal" icon={<Check className="h-5 w-5" />} onClick={() => decide(true)}>Let in</Button>

@@ -27,3 +27,16 @@ export function useMinWidth(min = 1280) {
   }, [q]);
   return ok;
 }
+
+/** Browser connection state, updated on the online and offline events. */
+export function useOnline() {
+  const [online, setOnline] = useState(() => typeof navigator === 'undefined' || navigator.onLine);
+  useEffect(() => {
+    const up = () => setOnline(true);
+    const down = () => setOnline(false);
+    window.addEventListener('online', up);
+    window.addEventListener('offline', down);
+    return () => { window.removeEventListener('online', up); window.removeEventListener('offline', down); };
+  }, []);
+  return online;
+}

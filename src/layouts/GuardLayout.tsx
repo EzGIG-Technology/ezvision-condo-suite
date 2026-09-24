@@ -1,12 +1,12 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { AlertTriangle, ClipboardPen, Home, LogOut, MessageCircle, Package, Route, ScanLine, UserPlus } from 'lucide-react';
+import { AlertTriangle, Bike, ClipboardPen, CloudOff, Home, LogOut, MessageCircle, Package, Route, ScanLine, UserPlus } from 'lucide-react';
 import { useCurrentGuard, useStore } from '@/store/useStore';
 import { PageOutlet } from '@/components/PageBoundary';
 import { Logo } from '@/components/vision';
 import { Avatar } from '@/components/ui';
 import { cn, hhmm } from '@/lib/utils';
-import { useNow } from '@/lib/hooks';
+import { useNow, useOnline } from '@/lib/hooks';
 import { toast } from '@/store/toast';
 
 const NAV = [
@@ -15,6 +15,7 @@ const NAV = [
   { to: '/guard/walk-in', label: 'Walk-in', icon: UserPlus },
   { to: '/guard/verify', label: 'Verify', icon: ScanLine },
   { to: '/guard/parcels', label: 'Parcels', icon: Package },
+  { to: '/guard/riders', label: 'Riders', icon: Bike },
   { to: '/guard/messages', label: 'Messages', icon: MessageCircle },
   { to: '/guard/patrol', label: 'Patrol', icon: Route },
   { to: '/guard/report', label: 'Report', icon: ClipboardPen },
@@ -32,6 +33,26 @@ export default function GuardLayout() {
   const seen = useRef<Set<string>>(new Set(alerts.map((a) => a.id)));
   const seenMsg = useRef<Set<string>>(new Set(messages.map((m) => m.id)));
   const unreadMsgs = messages.filter((m) => m.from === 'resident' && !m.read).length;
+  const online = useOnline();
+  const [queued, setQueued] = useState(0);
+  const pendingSync = useRef(0);
+  const wasOffline = useRef(false);
+
+  // Offline mode: the tablet keeps working from its own copy of the data. Count what changes while
+  // the connection is down, and report the sync when it comes back.
+  useEffect(() => {
+    if (!online) {
+      wasOffline.current = true;
+      return useStore.subscribe(() => { pendingSync.current += 1; setQueued(pendingSync.current); });
+    }
+    if (wasOffline.current) {
+      const n = pendingSync.current;
+      wasOffline.current = false;
+      pendingSync.current = 0;
+      setQueued(0);
+      toast.success('Back online', n ? `${n} change${n > 1 ? 's' : ''} synced to the portal.` : 'Nothing to sync.');
+    }
+  }, [online]);
 
   const open = alerts.filter((a) => a.status !== 'closed');
   const urgent = open.find((a) => a.status === 'open' && (a.severity === 'critical' || a.severity === 'high'));
@@ -93,6 +114,14 @@ export default function GuardLayout() {
             <button type="button" onClick={signOut} aria-label="Sign out" className="flex h-10 w-10 items-center justify-center rounded-xl text-muted-light hover:bg-night-panel md:hidden"><LogOut className="h-5 w-5" /></button>
           </div>
         </header>
+
+        {!online && (
+          <div role="status" className="flex items-center gap-3 bg-warn px-4 py-2.5 text-[13.5px] font-semibold text-navy sm:px-6">
+            <CloudOff className="h-4 w-4 shrink-0" />
+            <span className="min-w-0 flex-1">Offline. Keep working: walk-ins, parcels, riders and patrols are saved on this tablet and sync when the connection is back.</span>
+            <span className="shrink-0 rounded-lg bg-navy/10 px-2.5 py-1 text-xs font-bold">{queued} waiting to sync</span>
+          </div>
+        )}
 
         {urgent && !pathname.startsWith(`/guard/alerts/${urgent.id}`) && (
           <Link to={`/guard/alerts/${urgent.id}`} className="flex animate-fade-in items-center gap-3 bg-danger px-4 py-3 text-white sm:px-6">

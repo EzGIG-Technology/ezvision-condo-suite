@@ -61,6 +61,8 @@ type State = Seed & {
   // approvals
   createApproval: (a: Omit<Approval, 'id' | 'createdAt' | 'status'>) => string;
   respondApproval: (id: string, approve: boolean, by: string, recurring?: boolean) => void;
+  // riders
+  logRider: (r: { platform: string; name: string; phone: string; plate: string; unit: string; zone: 'dropoff' | 'unit'; by: string }) => { visitId?: string; approvalId?: string };
   // parcels
   logParcel: (p: Omit<Parcel, 'id' | 'loggedAt' | 'status' | 'code'>) => Parcel;
   collectParcel: (id: string, by: string) => void;
@@ -226,7 +228,13 @@ export const useStore = create<State>()(
         const ap = get().approvals.find((a) => a.id === id);
         if (!ap || ap.status !== 'waiting') return;
         let visitId: string | undefined;
-        if (approve) {
+        const rider = ap.purpose.match(/^(.+) delivery to your door$/);
+        if (approve && rider) {
+          visitId = get().createVisit({
+            name: ap.visitorName, phone: '—', type: 'rider', unit: ap.unit, host: by, plate: ap.plate, status: 'expected', validFrom: now(), validTo: new Date(Date.now() + 30 * 60_000).toISOString(),
+            selfie: false, faceVariant: ap.faceVariant, people: 1, verification: `Rider log · ${ap.plate ?? 'on foot'}`, createdBy: 'guard', note: 'Resident allowed delivery to the unit', zone: 'unit', platform: rider[1],
+          });
+        } else if (approve) {
           const until = new Date();
           until.setHours(23, 30, 0, 0);
           visitId = get().createVisit({
@@ -237,6 +245,23 @@ export const useStore = create<State>()(
           });
         }
         set({ approvals: get().approvals.map((a) => (a.id === id ? { ...a, status: approve ? 'approved' : 'declined', respondedAt: now(), respondedBy: by, visitId } : a)) });
+      },
+
+      logRider: (r) => {
+        if (r.zone === 'unit') {
+          const approvalId = get().createApproval({
+            visitorName: r.name || `${r.platform} rider`, unit: r.unit, purpose: `${r.platform} delivery to your door`, plate: r.plate || undefined,
+            faceVariant: 1 + Math.floor(Math.random() * 8), until: '30 minutes', idLast4: r.phone.replace(/\D/g, '').slice(-4) || '0000',
+          });
+          return { approvalId };
+        }
+        const visitId = get().createVisit({
+          name: r.name || `${r.platform} rider`, phone: r.phone || '—', type: 'rider', unit: r.unit, host: get().units.find((u) => u.unit === r.unit)?.name ?? r.unit,
+          plate: r.plate || undefined, status: 'on_site', entry: `Rider log · ${r.by}`, checkIn: now(), validFrom: now(), validTo: new Date(Date.now() + 20 * 60_000).toISOString(),
+          verification: 'Rider log', selfie: false, faceVariant: 1 + Math.floor(Math.random() * 8), people: 1, createdBy: 'guard', note: 'Drop-off zone only', zone: 'dropoff', platform: r.platform,
+        });
+        get().addNotice({ unit: r.unit, title: `${r.platform} rider at the lobby`, body: 'Your delivery is at the lobby drop-off point. Riders cannot go up to the units.', kind: 'visitor' });
+        return { visitId };
       },
 
       logParcel: (p) => {

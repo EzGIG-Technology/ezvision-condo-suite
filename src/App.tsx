@@ -35,6 +35,7 @@ const GuardParcels = lazy(() => import('@/pages/guard/Parcels'));
 const GuardPatrol = lazy(() => import('@/pages/guard/Patrol'));
 const GuardReport = lazy(() => import('@/pages/guard/Report'));
 const GuardMessages = lazy(() => import('@/pages/guard/Messages'));
+const GuardRiders = lazy(() => import('@/pages/guard/Riders'));
 
 const ResidentLayout = lazy(() => import('@/layouts/ResidentLayout'));
 const ResLogin = lazy(() => import('@/pages/resident/Login'));
@@ -110,6 +111,7 @@ export default function App() {
               <Route path="patrol" element={<GuardPatrol />} />
               <Route path="report" element={<GuardReport />} />
               <Route path="messages" element={<GuardMessages />} />
+              <Route path="riders" element={<GuardRiders />} />
               <Route path="*" element={<Navigate to="/guard" replace />} />
             </Route>
 

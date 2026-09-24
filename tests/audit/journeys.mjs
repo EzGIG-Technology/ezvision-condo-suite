@@ -18,7 +18,12 @@ const go = async (page, path) => { await page.goto(BASE + path); await ready(pag
 async function step(name, fn) {
   const t = Date.now();
   try { await fn(); results.push({ name, ok: true, ms: Date.now() - t }); console.log('PASS', name); }
-  catch (e) { results.push({ name, ok: false, error: String(e.message).split('\n').slice(0, 3).join(' ') }); console.log('FAIL', name, String(e.message).split('\n')[0]); }
+  catch (e) {
+    results.push({ name, ok: false, error: String(e.message).split('\n').slice(0, 3).join(' ') }); console.log('FAIL', name, String(e.message).split('\n')[0]);
+    // Screenshots of every app at the moment of failure, for diagnosis.
+    const slug = name.split(':')[0].toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    for (const [n, p] of [['portal', portal], ['guard', guard], ['resident', res], ['visitor', visitor]]) await p.screenshot({ path: `fail-${VP}-${slug}-${n}.png` }).catch(() => {});
+  }
 }
 
 const browser = await chromium.launch({ executablePath: EXE });
@@ -405,6 +410,50 @@ await step('e-Voting: resident votes in the app; manager records a proxy vote, c
   await go(res, '/app/vote');
   await expect(res.getByText('No open votes')).toBeVisible(T);
   await expect(res.locator('.card', { hasText: 'Install 12 EV chargers' }).getByText('Passed')).toBeVisible(T);
+});
+
+await step('Rider, drop-off: guard logs a GrabFood rider for the lobby; resident is told; rider checked out', async () => {
+  await go(guard, '/guard/riders');
+  await guard.getByLabel('Platform').selectOption('GrabFood');
+  await guard.getByLabel('Unit', { exact: true }).fill('A-15-07');
+  await guard.getByLabel('Motorbike plate').fill('AUD 77');
+  await guard.getByRole('button', { name: 'Log rider' }).click();
+  const row = guard.getByRole('region', { name: 'Riders on site' }).locator('div.rounded-xl', { hasText: 'AUD 77' });
+  await expect(row.getByText('Drop-off only')).toBeVisible(T);
+  await go(res, '/app/activity');
+  await expect(res.getByText('GrabFood rider at the lobby').first()).toBeVisible(T);
+  await row.getByRole('button', { name: 'Left' }).click();
+  await expect(row).toHaveCount(0, T);
+});
+
+await step('Rider, to the door: guard asks the resident; resident lets the rider up in the app; guard lets the rider up', async () => {
+  await go(guard, '/guard/riders');
+  await guard.getByLabel('Platform').selectOption('Lalamove');
+  await guard.getByLabel('Unit', { exact: true }).fill('A-15-07');
+  await guard.getByLabel('Motorbike plate').fill('AUD 88');
+  await guard.getByText('Up to the unit').click();
+  await guard.getByRole('button', { name: 'Ask the resident' }).click();
+  await expect(res.getByText('Lalamove rider is at the gate')).toBeVisible(T);
+  await res.getByText('Lalamove rider is at the gate').click();
+  await expect(res.getByText(/phone ending/)).toBeVisible(T);
+  await res.getByRole('button', { name: 'Let in' }).click();
+  const asked = guard.getByRole('region', { name: 'Waiting for residents' });
+  await expect(asked.getByText('Resident said yes')).toBeVisible(T);
+  await asked.getByRole('button', { name: 'Let rider up' }).click();
+  await expect(guard.getByRole('region', { name: 'Riders on site' }).locator('div.rounded-xl', { hasText: 'AUD 88' }).getByText('Allowed to unit')).toBeVisible(T);
+});
+
+await step('Offline mode: guard tablet loses the connection, keeps logging a parcel, and syncs when back online', async () => {
+  await go(guard, '/guard/parcels');
+  await ctx.setOffline(true);
+  await expect(guard.getByText(/^Offline\. Keep working/)).toBeVisible(T);
+  await guard.getByLabel('Unit').fill('B-12-05');
+  await guard.getByLabel('Tracking number').fill('OFFLINE0001');
+  await guard.getByRole('button', { name: 'Log parcel and notify' }).click();
+  await expect(guard.getByText(/[1-9]\d* waiting to sync/)).toBeVisible(T);
+  await ctx.setOffline(false);
+  await expect(guard.getByText('Back online')).toBeVisible(T);
+  await expect(guard.getByText(/synced to the portal/)).toBeVisible(T);
 });
 
 await step('Guard shift handover: checklist, sign off, logged out', async () => {

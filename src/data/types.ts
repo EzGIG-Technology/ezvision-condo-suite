@@ -56,6 +56,9 @@ export interface Visit {
   recurringDays?: boolean[];
   note?: string;
   createdBy: 'resident' | 'guard' | 'management';
+  /** Riders: lobby drop-off zone only, or allowed up to the unit by the resident. */
+  zone?: 'dropoff' | 'unit';
+  platform?: string;
 }
 
 export interface Approval {
