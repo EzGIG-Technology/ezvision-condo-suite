@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { Toaster } from '@/components/ui';
+import { ErrorBoundary, Loading } from '@/components/PageBoundary';
 import Launcher from '@/pages/Launcher';
 import NotFound from '@/pages/NotFound';
 import PortalLogin from '@/pages/portal/Login';
@@ -52,14 +53,6 @@ const VisitorPass = lazy(() => import('@/pages/visitor/VisitorPass'));
 const VisitorSelfie = lazy(() => import('@/pages/visitor/VisitorSelfie'));
 const CourierPass = lazy(() => import('@/pages/visitor/CourierPass'));
 
-function Loading() {
-  return (
-    <div className="flex min-h-[50vh] items-center justify-center" role="status" aria-label="Loading">
-      <span className="h-8 w-8 animate-spin rounded-full border-[3px] border-brand/20 border-t-brand" />
-    </div>
-  );
-}
-
 function ScrollToTop() {
   const { pathname } = useLocation();
   useEffect(() => window.scrollTo(0, 0), [pathname]);
@@ -70,69 +63,71 @@ export default function App() {
   return (
     <>
       <ScrollToTop />
-      <Suspense fallback={<Loading />}>
-        <Routes>
-          <Route path="/" element={<Launcher />} />
-          <Route path="/login" element={<PortalLogin />} />
-          <Route path="/portal" element={<PortalLayout />}>
-            <Route index element={<Navigate to="dashboard" replace />} />
-            <Route path="dashboard" element={<Dashboard />} />
-            <Route path="live" element={<LiveView />} />
-            <Route path="incidents" element={<Incidents />} />
-            <Route path="incidents/:id" element={<Incidents />} />
-            <Route path="unregistered" element={<Unregistered />} />
-            <Route path="search" element={<Search />} />
-            <Route path="visitors" element={<Visitors />} />
-            <Route path="vehicles" element={<Vehicles />} />
-            <Route path="permits" element={<Permits />} />
-            <Route path="residents" element={<Residents />} />
-            <Route path="residents/:unit" element={<Residents />} />
-            <Route path="watchlist" element={<Watchlist />} />
-            <Route path="guards" element={<Guards />} />
-            <Route path="community" element={<Community />} />
-            <Route path="reports" element={<Reports />} />
-            <Route path="rules" element={<Rules />} />
-            <Route path="privacy" element={<Privacy />} />
-            <Route path="*" element={<Navigate to="dashboard" replace />} />
-          </Route>
+      <ErrorBoundary>
+        <Suspense fallback={<Loading />}>
+          <Routes>
+            <Route path="/" element={<Launcher />} />
+            <Route path="/login" element={<PortalLogin />} />
+            <Route path="/portal" element={<PortalLayout />}>
+              <Route index element={<Navigate to="dashboard" replace />} />
+              <Route path="dashboard" element={<Dashboard />} />
+              <Route path="live" element={<LiveView />} />
+              <Route path="incidents" element={<Incidents />} />
+              <Route path="incidents/:id" element={<Incidents />} />
+              <Route path="unregistered" element={<Unregistered />} />
+              <Route path="search" element={<Search />} />
+              <Route path="visitors" element={<Visitors />} />
+              <Route path="vehicles" element={<Vehicles />} />
+              <Route path="permits" element={<Permits />} />
+              <Route path="residents" element={<Residents />} />
+              <Route path="residents/:unit" element={<Residents />} />
+              <Route path="watchlist" element={<Watchlist />} />
+              <Route path="guards" element={<Guards />} />
+              <Route path="community" element={<Community />} />
+              <Route path="reports" element={<Reports />} />
+              <Route path="rules" element={<Rules />} />
+              <Route path="privacy" element={<Privacy />} />
+              <Route path="*" element={<Navigate to="dashboard" replace />} />
+            </Route>
 
-          <Route path="/guard/login" element={<GuardLogin />} />
-          <Route path="/guard" element={<GuardLayout />}>
-            <Route index element={<GuardHome />} />
-            <Route path="alerts" element={<GuardAlerts />} />
-            <Route path="alerts/:id" element={<GuardAlerts />} />
-            <Route path="walk-in" element={<GuardWalkIn />} />
-            <Route path="verify" element={<GuardVerify />} />
-            <Route path="parcels" element={<GuardParcels />} />
-            <Route path="patrol" element={<GuardPatrol />} />
-            <Route path="report" element={<GuardReport />} />
-            <Route path="*" element={<Navigate to="/guard" replace />} />
-          </Route>
+            <Route path="/guard/login" element={<GuardLogin />} />
+            <Route path="/guard" element={<GuardLayout />}>
+              <Route index element={<GuardHome />} />
+              <Route path="alerts" element={<GuardAlerts />} />
+              <Route path="alerts/:id" element={<GuardAlerts />} />
+              <Route path="walk-in" element={<GuardWalkIn />} />
+              <Route path="verify" element={<GuardVerify />} />
+              <Route path="parcels" element={<GuardParcels />} />
+              <Route path="patrol" element={<GuardPatrol />} />
+              <Route path="report" element={<GuardReport />} />
+              <Route path="*" element={<Navigate to="/guard" replace />} />
+            </Route>
 
-          <Route path="/app/login" element={<ResLogin />} />
-          <Route path="/app/sos" element={<ResSOS />} />
-          <Route path="/app/approval/:id" element={<ResApproval />} />
-          <Route path="/app" element={<ResidentLayout />}>
-            <Route index element={<ResHome />} />
-            <Route path="invite" element={<ResInvite />} />
-            <Route path="pass/:id" element={<ResPass />} />
-            <Route path="visitors" element={<ResVisitors />} />
-            <Route path="parcels" element={<ResParcels />} />
-            <Route path="book" element={<ResBook />} />
-            <Route path="activity" element={<ResActivity />} />
-            <Route path="unit" element={<ResUnit />} />
-            <Route path="face" element={<ResFace />} />
-            <Route path="renovation" element={<ResRenovation />} />
-            <Route path="billing" element={<ResBilling />} />
-            <Route path="*" element={<Navigate to="/app" replace />} />
-          </Route>
+            <Route path="/app/login" element={<ResLogin />} />
+            <Route path="/app/sos" element={<ResSOS />} />
+            <Route path="/app/approval/:id" element={<ResApproval />} />
+            <Route path="/app" element={<ResidentLayout />}>
+              <Route index element={<ResHome />} />
+              <Route path="invite" element={<ResInvite />} />
+              <Route path="pass/:id" element={<ResPass />} />
+              <Route path="visitors" element={<ResVisitors />} />
+              <Route path="parcels" element={<ResParcels />} />
+              <Route path="book" element={<ResBook />} />
+              <Route path="activity" element={<ResActivity />} />
+              <Route path="unit" element={<ResUnit />} />
+              <Route path="face" element={<ResFace />} />
+              <Route path="renovation" element={<ResRenovation />} />
+              <Route path="billing" element={<ResBilling />} />
+              <Route path="*" element={<Navigate to="/app" replace />} />
+            </Route>
 
-          <Route path="/v/:id" element={<VisitorPass />} />
-          <Route path="/v/:id/selfie" element={<VisitorSelfie />} />
-          <Route path="/d/:code" element={<CourierPass />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </Suspense>
+            <Route path="/v/:id" element={<VisitorPass />} />
+            <Route path="/v/:id/selfie" element={<VisitorSelfie />} />
+            <Route path="/d/:code" element={<CourierPass />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
+      </ErrorBoundary>
       <Toaster />
     </>
   );

@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { Link, NavLink, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Link, NavLink, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import {
   AlertTriangle, Bell, Building2, ChevronsUpDown, FileText, LayoutGrid, Lock, LogOut, Megaphone, Menu, Search, ShieldCheck, SlidersHorizontal,
   Users, UserX, Car, ClipboardList, Ban, Video, Sparkles, Grid3X3, Check,
 } from 'lucide-react';
 import { useStore } from '@/store/useStore';
+import { PageOutlet } from '@/components/PageBoundary';
 import { Logo, CamFeed } from '@/components/vision';
 import { Drawer, Modal, Progress } from '@/components/ui';
 import { Button } from '@/components/ui/Button';
@@ -287,7 +288,7 @@ export default function PortalLayout() {
         </button>
       </header>
       <main className="mx-auto max-w-[1480px] px-4 py-5 sm:px-6 lg:px-8 lg:py-6">
-        <Outlet />
+        <PageOutlet />
       </main>
       <NotificationsDrawer open={notif} onClose={() => setNotif(false)} />
       <AgentModal open={agent} onClose={() => setAgent(false)} />

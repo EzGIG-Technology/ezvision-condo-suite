@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react';
-import { Link, NavLink, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Link, NavLink, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Bell, Home, Plus, UserRound, Users } from 'lucide-react';
 import { useStore } from '@/store/useStore';
+import { PageOutlet } from '@/components/PageBoundary';
 import { Logo, FaceCrop } from '@/components/vision';
 import { cn } from '@/lib/utils';
 import { toast } from '@/store/toast';
@@ -65,7 +66,7 @@ export default function ResidentLayout() {
         )}
 
         <main className="flex-1 px-4 pb-8 pt-4">
-          <Outlet />
+          <PageOutlet />
         </main>
 
         <nav aria-label="Resident" className="sticky bottom-0 z-30 grid grid-cols-5 border-t border-line bg-white safe-bottom sm:rounded-b-[32px]">

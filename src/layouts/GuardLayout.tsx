@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react';
-import { Link, NavLink, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Link, NavLink, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AlertTriangle, ClipboardPen, Home, LogOut, Package, Route, ScanLine, UserPlus } from 'lucide-react';
 import { useCurrentGuard, useStore } from '@/store/useStore';
+import { PageOutlet } from '@/components/PageBoundary';
 import { Logo } from '@/components/vision';
 import { Avatar } from '@/components/ui';
 import { cn, hhmm } from '@/lib/utils';
@@ -87,7 +88,7 @@ export default function GuardLayout() {
         )}
 
         <main className="mx-auto max-w-6xl px-4 pb-28 pt-5 sm:px-6 md:pb-10">
-          <Outlet />
+          <PageOutlet />
         </main>
       </div>
 
