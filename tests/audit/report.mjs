@@ -36,7 +36,7 @@ for (const vp of ['desktop', 'mobile']) {
 
 for (const vp of ['desktop', 'mobile']) {
   if (!jr[vp]) continue;
-  md += `## End-to-end journeys, ${vp}\n\nThe portal, guard tablet, resident app and visitor pass run as four tabs in one browser, like on a single machine. Every step waits for the real UI to update in the other tab.\n\n| Journey | Result |\n| --- | --- |\n`;
+  md += `## End-to-end journeys, ${vp}\n\nThe portal, guard tablet and resident app run as tabs in one browser, like on a single machine, with a fourth tab for the visitor pass, courier pass and lobby intercom panel. Every step waits for the real UI to update in the other tab.\n\n| Journey | Result |\n| --- | --- |\n`;
   for (const x of jr[vp].results) md += `| ${x.name} | ${x.ok ? `Pass (${(x.ms / 1000).toFixed(1)} s)` : `**Fail**: ${x.error}`} |\n`;
   md += `\nRuntime errors during journeys: ${jr[vp].errors.length ? jr[vp].errors.join('; ') : 'none'}.\n\n`;
 }
@@ -44,6 +44,6 @@ for (const vp of ['desktop', 'mobile']) {
 md += `## Fixed during the audit\n\n`;
 md += FIXED.map((f) => `- ${f}`).join('\n') + '\n\n';
 md += `## Known limits (by design, front end only)\n\n`;
-md += `- There is no backend. Data lives in the browser's localStorage and syncs between tabs on one machine, not between devices. Use **Reset demo data** on the launcher to start over.\n- Camera views, faces and QR codes are drawn illustrations. ID scanning, face matching, plate reads, payments, SMS and WhatsApp are simulated with realistic delays and results.\n- Web fonts load from Google Fonts. The audit sandbox blocks them, so those network errors were excluded, and the app falls back to system fonts.\n`;
+md += `- There is no backend. Data lives in the browser's localStorage and syncs between tabs on one machine, not between devices. Use **Reset demo data** on the launcher to start over.\n- Camera views, faces and QR codes are drawn illustrations. ID scanning, face matching, plate reads, payments, SMS and WhatsApp are simulated with realistic delays and results.\n- Web fonts load from Google Fonts. The audit sandbox blocks them (reported as ERR_TUNNEL or ERR_CERT_AUTHORITY_INVALID), so those network errors were excluded, and the app falls back to system fonts.\n`;
 fs.writeFileSync('AUDIT.md', md);
 console.log('AUDIT.md written');

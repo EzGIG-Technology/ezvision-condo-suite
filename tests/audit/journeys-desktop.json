@@ -3,97 +3,192 @@
     {
       "name": "Launcher lists the four apps and resets demo data",
       "ok": true,
-      "ms": 3662
+      "ms": 2605
     },
     {
       "name": "Portal: protected routes redirect to sign-in",
       "ok": true,
-      "ms": 276
+      "ms": 190
     },
     {
       "name": "Portal: sign in with email, password and 2-step code",
       "ok": true,
-      "ms": 4484
+      "ms": 2540
     },
     {
       "name": "Guard: wrong PIN is refused, right PIN signs in",
       "ok": true,
-      "ms": 18717
+      "ms": 18808
     },
     {
       "name": "Resident: sign in with phone and SMS code",
       "ok": true,
-      "ms": 3242
+      "ms": 3181
     },
     {
       "name": "Walk-in: guard scans ID, checks face, asks A-15-07; resident approves in the app; guard checks in; portal sees visitor",
       "ok": true,
-      "ms": 20921
+      "ms": 18049
     },
     {
       "name": "Invite: resident creates a pass; visitor opens it and adds a selfie; guard verifies by PIN and checks in; resident is notified",
       "ok": true,
-      "ms": 7066
+      "ms": 6921
     },
     {
       "name": "SOS: resident holds SOS; guard tablet gets banner and responds; resident sees each step; closed",
       "ok": true,
-      "ms": 17317
+      "ms": 17315
     },
     {
       "name": "Parcel: guard logs a parcel; resident sees the code; guard hands over by code; resident history updates",
       "ok": true,
-      "ms": 4570
+      "ms": 4513
     },
     {
       "name": "Renovation: resident applies; manager approves in the portal; resident pays deposit; permit active",
       "ok": true,
-      "ms": 26825
+      "ms": 26788
     },
     {
       "name": "Announcement: manager composes; resident receives it",
       "ok": true,
-      "ms": 3399
+      "ms": 3602
     },
     {
       "name": "Unregistered gallery: add unknown person to watchlist; appears on the watchlist page",
       "ok": true,
-      "ms": 3958
+      "ms": 6628
     },
     {
       "name": "Facility booking: resident books BBQ pit; manager sees it on the bookings timeline",
       "ok": true,
-      "ms": 15157
+      "ms": 18431
     },
     {
       "name": "Billing: resident pays the Q4 bill by FPX and downloads the receipt",
       "ok": true,
-      "ms": 7766
+      "ms": 9259
     },
     {
       "name": "Patrol: guard verifies next checkpoint; portal patrol matrix updates",
       "ok": true,
-      "ms": 3613
+      "ms": 2568
     },
     {
       "name": "Face access: resident enrols with consent, then deletes",
       "ok": true,
-      "ms": 17315
+      "ms": 17040
     },
     {
       "name": "Incident: manager acknowledges, dispatches and closes an alert with outcome; evidence pack downloads",
       "ok": true,
-      "ms": 520
+      "ms": 404
+    },
+    {
+      "name": "Guardhouse messages: resident messages the guardhouse; guard replies on the tablet; resident sees the reply",
+      "ok": true,
+      "ms": 5253
+    },
+    {
+      "name": "Defect report: resident reports a problem with a photo; manager sees it and updates it; resident is notified",
+      "ok": true,
+      "ms": 7414
+    },
+    {
+      "name": "Move-in: resident books the service lift and pays the deposit; manager approves; lorry is expected at the gate; inspection closes it and refunds",
+      "ok": true,
+      "ms": 22748
+    },
+    {
+      "name": "Limits: manager lowers visitor and car limits in Site settings; the resident app enforces them; limits restored",
+      "ok": true,
+      "ms": 11874
+    },
+    {
+      "name": "Multi-day pass: resident invites a guest for three days; the pass shows the last day",
+      "ok": true,
+      "ms": 5350
+    },
+    {
+      "name": "e-Voting: resident votes in the app; manager records a proxy vote, closes voting; resident sees the result",
+      "ok": true,
+      "ms": 30031
+    },
+    {
+      "name": "Rider, drop-off: guard logs a GrabFood rider for the lobby; resident is told; rider checked out",
+      "ok": true,
+      "ms": 2942
+    },
+    {
+      "name": "Rider, to the door: guard asks the resident; resident lets the rider up in the app; guard lets the rider up",
+      "ok": true,
+      "ms": 5366
+    },
+    {
+      "name": "Offline mode: guard tablet loses the connection, keeps logging a parcel, and syncs when back online",
+      "ok": true,
+      "ms": 420
+    },
+    {
+      "name": "Detection rules: full catalogue incl. audio; manager creates a compound rule that alerts only after midnight",
+      "ok": true,
+      "ms": 8698
+    },
+    {
+      "name": "Reports: the same report downloads as a real PDF, Excel and CSV file; pilot metrics are shown",
+      "ok": true,
+      "ms": 7395
+    },
+    {
+      "name": "Parcel locker: guard puts a parcel in a smart locker; resident opens the locker from the app",
+      "ok": true,
+      "ms": 5579
+    },
+    {
+      "name": "UHF tag, accounts and integrations: manager issues a windscreen tag, downloads the strata statement, tests a connection",
+      "ok": true,
+      "ms": 5069
+    },
+    {
+      "name": "Map timeline: evidence search shows a person's sightings numbered on the site map",
+      "ok": true,
+      "ms": 360
+    },
+    {
+      "name": "Video intercom: visitor calls A-15-07 from the lobby panel; resident answers and opens the door; guard call declined",
+      "ok": true,
+      "ms": 4157
+    },
+    {
+      "name": "Courier pass: resident creates a single-use code; guard checks it once with a photo stamp; second use refused",
+      "ok": true,
+      "ms": 8783
+    },
+    {
+      "name": "Visitor self-entry: guest types the pass PIN at the Tower A lobby panel and the door opens",
+      "ok": true,
+      "ms": 579
+    },
+    {
+      "name": "Emergency broadcast: manager sends an emergency notice; residents get it as a security notice",
+      "ok": true,
+      "ms": 8148
     },
     {
       "name": "Guard shift handover: checklist, sign off, logged out",
       "ok": true,
-      "ms": 8759
+      "ms": 6628
+    },
+    {
+      "name": "Roles: JMB/MC committee sees only its pages and approves a watchlist entry; security supervisor sees guards but not residents",
+      "ok": true,
+      "ms": 16425
     },
     {
       "name": "Sign out: resident and portal",
       "ok": true,
-      "ms": 7107
+      "ms": 7146
     }
   ],
   "errors": []

@@ -8,5 +8,12 @@
   "Guard Performance: the status dropdown collapsed and the row actions were clipped. The dropdown now has a fixed width and the row actions are icon buttons. Community bookings: the day tabs now scroll inside the card on phones.",
   "Charts: the last x-axis label was clipped at the right edge.",
   "Evidence Search: the selected result now reports its pressed state to screen readers. Resident Activity: notices with no link that are already read are no longer shown as buttons.",
-  "Guard PIN pad: Delete is disabled while no digits are entered."
+  "Guard PIN pad: Delete is disabled while no digits are entered.",
+  "Blank page after a deploy: an open tab asked for the old build's page files, got the index page back, and the whole app unmounted. The app now reloads once onto the new build, pages load inside their layout, and any page that still fails shows a Reload screen instead of a blank page. vercel.json uses the plain SPA rewrite, and the launcher shows the live build.",
+  "Cross-tab race: an action that saved twice (for example, a guard reply and then its notice) let another tab reload the half-saved state and overwrite the second half. Writes in the same tick are now saved once.",
+  "Service lift bookings and e-voting results lived in page state and were lost on reload. Both are now stored and shared across the apps.",
+  "Facilities were hard-coded in two places, so management could not change what residents can book. They are now managed on the portal Facilities page.",
+  "Move booking: when three days ahead fell on a Sunday, the day list skipped it but the form still booked it. The default is now the first allowed day.",
+  "Reports: the PDF option downloaded a text file. Every report now exports as a real PDF, Excel or CSV file, and the evidence pack and receipts are PDFs.",
+  "Seeded false-alert counts on the new detection rules pushed the overall rate above the 8% pilot target; they now reflect realistic tuning (6.2%)."
 ]

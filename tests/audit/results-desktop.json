@@ -5,8 +5,8 @@
       "surface": "public",
       "route": "/",
       "finalUrl": "/",
-      "clickables": 5,
-      "tested": 8,
+      "clickables": 6,
+      "tested": 9,
       "dead": 0
     },
     {
@@ -90,18 +90,26 @@
       "dead": 0
     },
     {
+      "surface": "public",
+      "route": "/panel",
+      "finalUrl": "/panel",
+      "clickables": 15,
+      "tested": 5,
+      "dead": 0
+    },
+    {
       "surface": "portal",
       "route": "/portal/dashboard",
       "finalUrl": "/portal/dashboard",
-      "clickables": 50,
-      "tested": 74,
+      "clickables": 53,
+      "tested": 77,
       "dead": 0
     },
     {
       "surface": "portal",
       "route": "/portal/live",
       "finalUrl": "/portal/live",
-      "clickables": 49,
+      "clickables": 52,
       "tested": 27,
       "dead": 0
     },
@@ -109,7 +117,7 @@
       "surface": "portal",
       "route": "/portal/incidents",
       "finalUrl": "/portal/incidents",
-      "clickables": 42,
+      "clickables": 45,
       "tested": 23,
       "dead": 0
     },
@@ -117,7 +125,7 @@
       "surface": "portal",
       "route": "/portal/incidents/al-2",
       "finalUrl": "/portal/incidents/al-2",
-      "clickables": 42,
+      "clickables": 45,
       "tested": 1,
       "dead": 0
     },
@@ -125,7 +133,7 @@
       "surface": "portal",
       "route": "/portal/unregistered",
       "finalUrl": "/portal/unregistered",
-      "clickables": 38,
+      "clickables": 41,
       "tested": 27,
       "dead": 0
     },
@@ -133,7 +141,7 @@
       "surface": "portal",
       "route": "/portal/search",
       "finalUrl": "/portal/search",
-      "clickables": 39,
+      "clickables": 42,
       "tested": 12,
       "dead": 0
     },
@@ -141,7 +149,7 @@
       "surface": "portal",
       "route": "/portal/search?q=red%20myvi%20yesterday",
       "finalUrl": "/portal/search?q=red%20myvi%20yesterday",
-      "clickables": 39,
+      "clickables": 42,
       "tested": 6,
       "dead": 0
     },
@@ -149,7 +157,7 @@
       "surface": "portal",
       "route": "/portal/visitors",
       "finalUrl": "/portal/visitors",
-      "clickables": 40,
+      "clickables": 43,
       "tested": 20,
       "dead": 0
     },
@@ -157,7 +165,7 @@
       "surface": "portal",
       "route": "/portal/vehicles",
       "finalUrl": "/portal/vehicles",
-      "clickables": 60,
+      "clickables": 63,
       "tested": 39,
       "dead": 0
     },
@@ -165,15 +173,15 @@
       "surface": "portal",
       "route": "/portal/permits",
       "finalUrl": "/portal/permits",
-      "clickables": 25,
-      "tested": 11,
+      "clickables": 34,
+      "tested": 29,
       "dead": 0
     },
     {
       "surface": "portal",
       "route": "/portal/residents",
       "finalUrl": "/portal/residents",
-      "clickables": 35,
+      "clickables": 38,
       "tested": 15,
       "dead": 0
     },
@@ -181,15 +189,15 @@
       "surface": "portal",
       "route": "/portal/residents/A-15-07",
       "finalUrl": "/portal/residents/A-15-07",
-      "clickables": 38,
-      "tested": 29,
+      "clickables": 42,
+      "tested": 30,
       "dead": 0
     },
     {
       "surface": "portal",
       "route": "/portal/watchlist",
       "finalUrl": "/portal/watchlist",
-      "clickables": 37,
+      "clickables": 40,
       "tested": 7,
       "dead": 0
     },
@@ -197,7 +205,7 @@
       "surface": "portal",
       "route": "/portal/guards",
       "finalUrl": "/portal/guards",
-      "clickables": 41,
+      "clickables": 44,
       "tested": 56,
       "dead": 0
     },
@@ -205,7 +213,7 @@
       "surface": "portal",
       "route": "/portal/community",
       "finalUrl": "/portal/community",
-      "clickables": 26,
+      "clickables": 29,
       "tested": 10,
       "dead": 0
     },
@@ -213,15 +221,15 @@
       "surface": "portal",
       "route": "/portal/community?tab=bookings",
       "finalUrl": "/portal/community?tab=bookings",
-      "clickables": 38,
-      "tested": 17,
+      "clickables": 42,
+      "tested": 18,
       "dead": 0
     },
     {
       "surface": "portal",
       "route": "/portal/community?tab=tickets",
       "finalUrl": "/portal/community?tab=tickets",
-      "clickables": 28,
+      "clickables": 31,
       "tested": 7,
       "dead": 0
     },
@@ -229,15 +237,15 @@
       "surface": "portal",
       "route": "/portal/community?tab=fees",
       "finalUrl": "/portal/community?tab=fees",
-      "clickables": 35,
-      "tested": 4,
+      "clickables": 40,
+      "tested": 6,
       "dead": 0
     },
     {
       "surface": "portal",
       "route": "/portal/community?tab=parcels",
       "finalUrl": "/portal/community?tab=parcels",
-      "clickables": 27,
+      "clickables": 30,
       "tested": 2,
       "dead": 0
     },
@@ -245,47 +253,71 @@
       "surface": "portal",
       "route": "/portal/community?tab=voting",
       "finalUrl": "/portal/community?tab=voting",
-      "clickables": 27,
-      "tested": 7,
+      "clickables": 32,
+      "tested": 15,
+      "dead": 0
+    },
+    {
+      "surface": "portal",
+      "route": "/portal/facilities",
+      "finalUrl": "/portal/facilities",
+      "clickables": 43,
+      "tested": 12,
       "dead": 0
     },
     {
       "surface": "portal",
       "route": "/portal/reports",
       "finalUrl": "/portal/reports",
-      "clickables": 40,
-      "tested": 25,
+      "clickables": 81,
+      "tested": 63,
       "dead": 0
     },
     {
       "surface": "portal",
       "route": "/portal/rules",
       "finalUrl": "/portal/rules",
-      "clickables": 74,
-      "tested": 148,
+      "clickables": 177,
+      "tested": 446,
       "dead": 0
     },
     {
       "surface": "portal",
       "route": "/portal/privacy",
       "finalUrl": "/portal/privacy",
-      "clickables": 29,
-      "tested": 8,
+      "clickables": 33,
+      "tested": 9,
+      "dead": 0
+    },
+    {
+      "surface": "portal",
+      "route": "/portal/integrations",
+      "finalUrl": "/portal/integrations",
+      "clickables": 32,
+      "tested": 9,
+      "dead": 0
+    },
+    {
+      "surface": "portal",
+      "route": "/portal/settings",
+      "finalUrl": "/portal/settings",
+      "clickables": 23,
+      "tested": 0,
       "dead": 0
     },
     {
       "surface": "guard",
       "route": "/guard",
       "finalUrl": "/guard",
-      "clickables": 27,
-      "tested": 26,
+      "clickables": 31,
+      "tested": 30,
       "dead": 0
     },
     {
       "surface": "guard",
       "route": "/guard/alerts",
       "finalUrl": "/guard/alerts",
-      "clickables": 17,
+      "clickables": 19,
       "tested": 9,
       "dead": 0
     },
@@ -293,7 +325,7 @@
       "surface": "guard",
       "route": "/guard/alerts/al-2",
       "finalUrl": "/guard/alerts/al-2",
-      "clickables": 17,
+      "clickables": 19,
       "tested": 14,
       "dead": 0
     },
@@ -301,7 +333,7 @@
       "surface": "guard",
       "route": "/guard/walk-in",
       "finalUrl": "/guard/walk-in",
-      "clickables": 11,
+      "clickables": 13,
       "tested": 2,
       "dead": 0
     },
@@ -309,7 +341,7 @@
       "surface": "guard",
       "route": "/guard/verify",
       "finalUrl": "/guard/verify",
-      "clickables": 12,
+      "clickables": 14,
       "tested": 3,
       "dead": 0
     },
@@ -317,15 +349,15 @@
       "surface": "guard",
       "route": "/guard/parcels",
       "finalUrl": "/guard/parcels",
-      "clickables": 14,
-      "tested": 5,
+      "clickables": 17,
+      "tested": 6,
       "dead": 0
     },
     {
       "surface": "guard",
       "route": "/guard/patrol",
       "finalUrl": "/guard/patrol",
-      "clickables": 12,
+      "clickables": 14,
       "tested": 6,
       "dead": 0
     },
@@ -333,24 +365,40 @@
       "surface": "guard",
       "route": "/guard/report",
       "finalUrl": "/guard/report",
-      "clickables": 17,
+      "clickables": 19,
       "tested": 8,
+      "dead": 0
+    },
+    {
+      "surface": "guard",
+      "route": "/guard/messages",
+      "finalUrl": "/guard/messages",
+      "clickables": 18,
+      "tested": 7,
+      "dead": 0
+    },
+    {
+      "surface": "guard",
+      "route": "/guard/riders",
+      "finalUrl": "/guard/riders",
+      "clickables": 13,
+      "tested": 2,
       "dead": 0
     },
     {
       "surface": "resident",
       "route": "/app",
       "finalUrl": "/app",
-      "clickables": 21,
-      "tested": 20,
+      "clickables": 25,
+      "tested": 23,
       "dead": 0
     },
     {
       "surface": "resident",
       "route": "/app/invite",
       "finalUrl": "/app/invite",
-      "clickables": 17,
-      "tested": 12,
+      "clickables": 18,
+      "tested": 13,
       "dead": 0
     },
     {
@@ -381,15 +429,15 @@
       "surface": "resident",
       "route": "/app/book",
       "finalUrl": "/app/book",
-      "clickables": 34,
-      "tested": 29,
+      "clickables": 53,
+      "tested": 49,
       "dead": 0
     },
     {
       "surface": "resident",
       "route": "/app/activity",
       "finalUrl": "/app/activity",
-      "clickables": 18,
+      "clickables": 19,
       "tested": 11,
       "dead": 0
     },
@@ -397,8 +445,8 @@
       "surface": "resident",
       "route": "/app/unit",
       "finalUrl": "/app/unit",
-      "clickables": 25,
-      "tested": 19,
+      "clickables": 29,
+      "tested": 23,
       "dead": 0
     },
     {
@@ -440,13 +488,45 @@
       "clickables": 6,
       "tested": 5,
       "dead": 0
+    },
+    {
+      "surface": "resident",
+      "route": "/app/guardhouse",
+      "finalUrl": "/app/guardhouse",
+      "clickables": 15,
+      "tested": 6,
+      "dead": 0
+    },
+    {
+      "surface": "resident",
+      "route": "/app/report",
+      "finalUrl": "/app/report",
+      "clickables": 9,
+      "tested": 1,
+      "dead": 0
+    },
+    {
+      "surface": "resident",
+      "route": "/app/move",
+      "finalUrl": "/app/move",
+      "clickables": 9,
+      "tested": 1,
+      "dead": 0
+    },
+    {
+      "surface": "resident",
+      "route": "/app/vote",
+      "finalUrl": "/app/vote",
+      "clickables": 11,
+      "tested": 12,
+      "dead": 0
     }
   ],
   "dead": [],
   "errors": [],
   "overflow": [],
-  "tested": 816,
-  "ok": 825,
+  "tested": 1275,
+  "ok": 1285,
   "external": [
     {
       "route": "/v/v-10",
@@ -461,7 +541,7 @@
     },
     {
       "route": "/app/unit",
-      "i": 19,
+      "i": 23,
       "tag": "a",
       "text": "Privacy and your data",
       "aria": "",
@@ -480,8 +560,19 @@
       "target": "",
       "type": "",
       "inDialog": false
+    },
+    {
+      "route": "/app/guardhouse",
+      "i": 3,
+      "tag": "a",
+      "text": "Call guardhouse +60 3-7890 1234",
+      "aria": "",
+      "href": "tel:+60378901234",
+      "target": "",
+      "type": "",
+      "inDialog": false
     }
   ],
-  "skipped": 779,
+  "skipped": 1484,
   "selfLinks": 6
 }
