@@ -83,7 +83,7 @@ export default function Search() {
   const createAlert = useStore((s) => s.createAlert);
   const navigate = useNavigate();
   const reads = useMemo(() => makeReads(), []);
-  useEffect(() => setText(q), [q]);
+  useEffect(() => { setText(q); }, [q]);
 
   const u = understand(q);
   const results: Result[] = useMemo(() => {

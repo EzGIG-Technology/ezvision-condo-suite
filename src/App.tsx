@@ -65,13 +65,18 @@ const LobbyPanel = lazy(() => import('@/pages/visitor/LobbyPanel'));
 
 function ScrollToTop() {
   const { pathname } = useLocation();
-  useEffect(() => window.scrollTo(0, 0), [pathname]);
+  // Braces matter: returning scrollTo's result would hand React a cleanup value. Some browser extensions make
+  // scrollTo return a Promise, and React then crashes on the next navigation, leaving a blank page.
+  useEffect(() => {
+    try { window.scrollTo(0, 0); } catch { /* scrolling is cosmetic; never let it break navigation */ }
+  }, [pathname]);
   return null;
 }
 
 export default function App() {
   return (
-    <>
+    // One boundary around everything, so no error anywhere (routes, scroll handling, toasts) can blank the screen.
+    <ErrorBoundary>
       <ScrollToTop />
       <ErrorBoundary>
         <Suspense fallback={<Loading />}>
@@ -149,6 +154,6 @@ export default function App() {
         </Suspense>
       </ErrorBoundary>
       <Toaster />
-    </>
+    </ErrorBoundary>
   );
 }

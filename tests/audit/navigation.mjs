@@ -11,6 +11,9 @@ const exe = process.env.CHROMIUM_PATH || undefined;
 const browser = process.env.USER_DIR ? null : await chromium.launch({ executablePath: exe });
 const ctx = browser ? await browser.newContext(vp) : await chromium.launchPersistentContext(process.env.USER_DIR, { executablePath: exe, ...vp });
 const b = { close: async () => { await ctx.close(); await browser?.close(); } };
+// Behave like a browser with a scroll extension: scrollTo returns a Promise. An effect that returned it
+// once blanked the whole app on every link click in such browsers.
+await ctx.addInitScript(() => { const orig = window.scrollTo.bind(window); window.scrollTo = (...a) => { orig(...a); return Promise.resolve(); }; });
 const p = ctx.pages()[0] ?? await ctx.newPage();
 const errs = [];
 p.on('pageerror', (e) => errs.push(e.message));

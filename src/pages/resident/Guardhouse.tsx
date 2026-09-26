@@ -24,7 +24,7 @@ export default function ResidentGuardhouse() {
   useEffect(() => {
     if (unreadFromGuard) markMessagesRead(unit, 'resident');
   }, [unreadFromGuard, unit, markMessagesRead]);
-  useEffect(() => end.current?.scrollIntoView?.({ block: 'end' }), [thread.length]);
+  useEffect(() => { end.current?.scrollIntoView?.({ block: 'end' }); }, [thread.length]);
 
   const send = (body: string) => {
     const t = body.trim();

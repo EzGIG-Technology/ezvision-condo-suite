@@ -57,6 +57,11 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, BoundarySt
             ? 'A newer version of the app may be available, or the connection dropped.'
             : 'Something went wrong while showing this page.'}
         </p>
+        {!isChunkLoadError(this.state.error) && (
+          <p className="max-w-md break-words rounded-lg bg-ice px-3 py-2 font-mono text-[11.5px] text-muted-dark">
+            {this.state.error instanceof Error ? this.state.error.message : String(this.state.error)} · version {__BUILD__}
+          </p>
+        )}
         <button
           type="button"
           onClick={() => window.location.reload()}
