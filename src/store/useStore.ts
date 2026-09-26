@@ -367,6 +367,12 @@ export const useStore = create<State>()(
           });
         }
         if (status === 'rejected' && visitId) get().cancelVisit(visitId);
+        // Closing a move ends the mover's visit: checked out if on site, otherwise the pass is cancelled.
+        if (status === 'completed' && visitId) {
+          const v = get().visits.find((x) => x.id === visitId);
+          if (v?.status === 'on_site') get().checkOutVisit(visitId);
+          else if (v?.status === 'expected') get().cancelVisit(visitId);
+        }
         const depositRefunded = status === 'completed' && b.depositPaid ? true : b.depositRefunded;
         set({ liftBookings: get().liftBookings.map((x) => (x.id === id ? { ...x, status, visitId, depositRefunded } : x)) });
         const day = new Date(b.date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });

@@ -7,7 +7,7 @@ import { toast } from '@/store/toast';
 import type { SiteLimits } from '@/data/types';
 
 const FIELDS: { key: keyof SiteLimits; label: string; hint: string; min: number; max: number; group: 'visitors' | 'vehicles' }[] = [
-  { key: 'visitorsPerDay', label: 'Visitor passes per unit per day', hint: 'Walk-ins approved by the resident do not count.', min: 1, max: 50, group: 'visitors' },
+  { key: 'visitorsPerDay', label: 'Visitor passes per unit per day', hint: 'Counts passes residents create. Walk-ins, movers and contractors do not count.', min: 1, max: 50, group: 'visitors' },
   { key: 'onSiteAtOnce', label: 'Visitors per unit at the same time', hint: 'Event passes have their own limit below.', min: 1, max: 50, group: 'visitors' },
   { key: 'eventGuestCap', label: 'Guests per event pass', hint: 'For parties and gatherings in a unit or facility.', min: 1, max: 200, group: 'visitors' },
   { key: 'multiDayMax', label: 'Longest multi-day pass (days)', hint: 'The pass expires automatically at the end time on the last day.', min: 1, max: 60, group: 'visitors' },

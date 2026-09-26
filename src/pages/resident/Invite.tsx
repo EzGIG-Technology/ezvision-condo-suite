@@ -64,7 +64,8 @@ export default function ResidentInvite() {
     if (vt <= vf) vt.setDate(vt.getDate() + 1);
     if (vt < new Date()) return toast.error('That time has already passed');
     // Limits set by management in Site settings.
-    const live = visits.filter((v) => v.unit === resident.unit && v.status !== 'cancelled' && v.status !== 'denied');
+    // Limits apply to passes the resident creates, not to walk-ins, movers or contractors arranged by the guard or management.
+    const live = visits.filter((v) => v.unit === resident.unit && v.createdBy === 'resident' && v.status !== 'cancelled' && v.status !== 'denied');
     const sameDay = live.filter((v) => new Date(v.validFrom).toDateString() === vf.toDateString()).length;
     if (sameDay >= limits.visitorsPerDay) return toast.error(`Up to ${limits.visitorsPerDay} visitor passes a day`, 'Your unit has reached the limit for that day. Cancel a pass or pick another day.');
     if (type === 'event' && people > limits.eventGuestCap) return toast.error(`Events are limited to ${limits.eventGuestCap} guests`);
