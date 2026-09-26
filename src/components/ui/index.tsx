@@ -224,7 +224,7 @@ export function Modal({ open, onClose, title, description, children, footer, siz
         role="dialog"
         aria-modal="true"
         aria-label={typeof title === 'string' ? title : undefined}
-        className={cn('relative flex max-h-[92vh] w-full animate-slide-up flex-col overflow-hidden rounded-t-3xl shadow-pop sm:rounded-2xl', widths[size], dark ? 'bg-night-panel text-white' : 'bg-white text-navy')}
+        className={cn('dialog-panel relative flex max-h-[92vh] w-full animate-slide-up flex-col overflow-hidden rounded-t-3xl shadow-pop sm:rounded-2xl', widths[size], dark ? 'bg-night-panel text-white' : 'bg-white text-navy')}
       >
         <div className={cn('flex items-start justify-between gap-4 border-b px-5 py-4', dark ? 'border-night-line' : 'border-line')}>
           <div className="flex min-w-0 flex-col gap-1">

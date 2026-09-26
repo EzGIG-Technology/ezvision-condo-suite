@@ -77,3 +77,25 @@
   left: 0;
   top: 0;
 }
+
+/* Touch devices, including iPad with a connected trackpad, retain usable tap targets.
+   Keep these after utilities so compact desktop control sizes cannot override them. */
+@media (any-pointer: coarse) {
+  button:not([role='switch']), a.inline-flex, nav a, header a {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  input:not([type='checkbox']):not([type='radio']):not([type='range']), select, textarea {
+    font-size: 16px;
+    min-height: 44px;
+  }
+  button, a {
+    touch-action: manipulation;
+  }
+}
+
+/* Follow Safari's visible viewport as its browser chrome expands or collapses. */
+@supports (height: 100dvh) {
+  .min-h-screen { min-height: 100dvh; }
+  .dialog-panel { max-height: calc(100dvh - 2rem - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }
+}

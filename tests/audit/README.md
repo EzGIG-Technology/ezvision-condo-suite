@@ -16,3 +16,15 @@ node report.mjs            # writes AUDIT.md here
 ```
 
 Set `BASE_URL` to audit a deployed URL, for example a Vercel preview. Set `CHROMIUM_PATH` to use a specific browser binary.
+
+## 11-inch iPad Pro
+
+Install Safari's test engine with `npx playwright install webkit`, then run:
+
+```bash
+node tests/audit/navigation.mjs ipad           # 834 × 1194, touch, WebKit
+node tests/audit/navigation.mjs ipad-landscape # 1194 × 834, touch, WebKit
+```
+
+Both profiles check navigation, blank pages, JavaScript errors and horizontal page overflow.
+Set `BASE_URL` to check the live deployment. Device emulation does not replace physical iPad testing.

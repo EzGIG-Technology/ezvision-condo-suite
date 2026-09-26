@@ -2,14 +2,19 @@
 // double clicks and back/forward, and fails any page that is still blank or stuck 6 s after the click.
 // Usage: node navigation.mjs <desktop|mobile>. Set BASE_URL to test a deployed site.
 // Set USER_DIR to reuse a browser profile (for example one holding data saved by an older version).
-import { chromium } from 'playwright';
+import { chromium, webkit, devices } from 'playwright';
 const B = process.env.BASE_URL || 'http://localhost:4173';
-const mobile = process.argv[2] === 'mobile';
-const vp = mobile ? { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true } : { viewport: { width: 1440, height: 900 } };
-const exe = process.env.CHROMIUM_PATH || undefined;
+const profile = process.argv[2] || 'desktop';
+const ipad = profile.startsWith('ipad');
+const mobile = profile === 'mobile';
+const vp = ipad ? { ...devices[profile === 'ipad-landscape' ? 'iPad Pro 11 landscape' : 'iPad Pro 11'] } : mobile ? { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true } : { viewport: { width: 1440, height: 900 } };
+const engine = ipad ? webkit : chromium;
+const exe = ipad ? undefined : process.env.CHROMIUM_PATH || undefined;
+const menu = vp.viewport.width < 1024;
+const bottomGuardNav = vp.viewport.width < 768;
 // USER_DIR keeps localStorage between runs, like a real browser that used an older version.
-const browser = process.env.USER_DIR ? null : await chromium.launch({ executablePath: exe });
-const ctx = browser ? await browser.newContext(vp) : await chromium.launchPersistentContext(process.env.USER_DIR, { executablePath: exe, ...vp });
+const browser = process.env.USER_DIR ? null : await engine.launch({ executablePath: exe });
+const ctx = browser ? await browser.newContext(vp) : await engine.launchPersistentContext(process.env.USER_DIR, { executablePath: exe, ...vp });
 const b = { close: async () => { await ctx.close(); await browser?.close(); } };
 // Behave like a browser with a scroll extension: scrollTo returns a Promise. An effect that returned it
 // once blanked the whole app on every link click in such browsers.
@@ -27,11 +32,13 @@ const settled = async (label) => {
     const m = document.querySelector('main') ?? document.body;
     return !m.querySelector('[aria-label="Loading"]') && m.innerText.trim().length > 60 && !/This page didn't load/.test(m.innerText);
   }, null, { timeout: 6000 }).then(() => true, () => false);
+  const overflow = await p.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1);
+  if (overflow) bad.push(`${label}: horizontal page overflow`);
   clicks++;
   if (!ok) bad.push(`${label} → ${new URL(p.url()).pathname}: ${(await p.locator('body').innerText()).trim().slice(0, 90).replace(/\s+/g, ' ') || '(empty)'}`);
 };
 const openMenu = async () => {
-  if (!mobile) return;
+  if (!menu) return;
   if (!(await p.getByRole('dialog', { name: 'Menu' }).isVisible().catch(() => false))) await p.getByRole('button', { name: 'Open menu' }).click();
 };
 const portalNav = () => p.locator('nav[aria-label=Main]').last();
@@ -63,7 +70,7 @@ await p.getByRole('button', { name: /Kumar Selvam/ }).click();
 for (const d of '2468') await p.getByRole('button', { name: d, exact: true }).click();
 await p.waitForURL(B + '/guard');
 await settled('guard sign-in');
-const guardNav = mobile ? p.locator('nav[aria-label=Guard]').last() : p.locator('aside nav[aria-label=Guard]');
+const guardNav = bottomGuardNav ? p.locator('nav[aria-label=Guard]').last() : p.locator('aside nav[aria-label=Guard]');
 await guardNav.locator('a').first().waitFor({ timeout: 10000 });
 const guardLinks = (await guardNav.locator('a').allInnerTexts()).map((t) => t.split('\n')[0].trim()).filter(Boolean);
 for (const n of guardLinks) { await guardNav.locator('a', { hasText: n }).first().click(); await settled(`guard ${n}`); }
@@ -86,7 +93,7 @@ for (const t of tiles) {
   await p.locator('main a.card', { hasText: t }).first().click(); await settled(`tile ${t}`);
 }
 
-console.log(`${mobile ? 'mobile' : 'desktop'}: ${clicks} navigations (portal ${portalLinks.length}, guard ${guardLinks.length}, resident ${resLinks.length}, tiles ${tiles.length}); blank or stuck: ${bad.length}; errors: ${errs.length}`);
+console.log(`${profile}: ${clicks} navigations (portal ${portalLinks.length}, guard ${guardLinks.length}, resident ${resLinks.length}, tiles ${tiles.length}); blank or stuck: ${bad.length}; errors: ${errs.length}`);
 bad.forEach((x) => console.log('  BLANK', x));
 if (bad.length || errs.length) process.exitCode = 1;
 errs.slice(0, 5).forEach((e) => console.log('  ERR', e.slice(0, 200)));
