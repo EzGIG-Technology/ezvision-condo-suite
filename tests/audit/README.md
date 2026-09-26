@@ -10,6 +10,8 @@ node crawl.mjs desktop     # every route, every button, 1440×900
 node crawl.mjs mobile      # same at 390×844 (touch)
 node journeys.mjs desktop  # 19 cross-app journeys
 node journeys.mjs mobile
+node navigation.mjs desktop # every nav link, fails on any blank or stuck page
+node navigation.mjs mobile
 node report.mjs            # writes AUDIT.md here
 ```
 
